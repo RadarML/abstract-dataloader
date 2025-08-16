@@ -1,4 +1,4 @@
-"""Dataloader / Pytorch Bridge.
+"""Dataloader / Pytorch Lightning Datamodule bridge.
 
 !!! warning
 

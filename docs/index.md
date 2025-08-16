@@ -59,7 +59,7 @@ While it is not necessary to install the `abstract_dataloader` in order to take 
 
 !!! question "Missing Component?"
 
-    If you have any ideas or requests for commonly used, generic components to add to [`abstract_dataloader.generic`][abstract_dataloader.generic], please open an issue!
+    If you have any ideas or requests for commonly used, generic components to add to [`abstract_dataloader.generic`][abstract_dataloader.generic] or the [extensions][abstract_dataloader.ext], please open an issue!
 
 ## Dependencies
 

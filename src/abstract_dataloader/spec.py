@@ -11,12 +11,7 @@ implement.
     ADL specification protocol types are defined as
     [generics](https://typing.python.org/en/latest/reference/generics.html),
     which are parameterized by other types. These type parameters are
-    documented by a `Type Parameters` section where applicable.
-
-!!! composition-rules "Composition Rules"
-
-    ADL protocols which can be *composed* together are documented by a
-    `Composition Rules` section.
+    documented by a **Type Parameters** section where applicable.
 """
 
 from collections.abc import Iterator, Sequence
@@ -202,7 +197,7 @@ class Trace(Protocol, Generic[TSample]):
 
         Returns:
             Loaded sample if `index` is an integer type, or the appropriate
-            [`Sensor`][^^.] if `index` is a `str`.
+                [`Sensor`][^^.] if `index` is a `str`.
         """
         ...
 
@@ -258,15 +253,6 @@ class Transform(Protocol, Generic[TRaw, TTransformed]):
         This protocol is a suggestively-named equivalent to
         `Callable[[TRaw], TTransformed]` or `Callable[[Any], Any]`.
 
-    Composition Rules:
-        - `Transform` can be freely composed, as long as each transform's
-          `TTransformed` matches the next transform's `TRaw`; this composition
-          is implemented by [`abstract.Transform`][abstract_dataloader.].
-        - Composed `Transform`s result in another `Transform`:
-          ```
-          Transform[T2, T3] (.) Transform[T1, T2] = Transform[T1, T3].
-          ```
-
     Type Parameters:
         - `TRaw`: Input data type.
         - `TTransformed`: Output data type.
@@ -294,10 +280,6 @@ class Collate(Protocol, Generic[TTransformed, TCollated]):
         `Callable[[Sequence[TTransformed]], TCollated]`. `Collate` can also
         be viewed as a special case of `Transform`, where the input type
         `TRaw` must be a `Sequence[...]`.
-
-    Composition Rules:
-        - `Collate` can only be composed in parallel, and can never be
-          sequentially composed.
 
     Type Parameters:
         - `TTransformed`: Input data type.
@@ -327,19 +309,14 @@ class Pipeline(
     `Raw -> Transformed -> Collated -> Processed` pipeline with three
     transforms:
 
-    - [`sample`][.]: a sample to sample transform; can be sequentially
-      assembled from one or more [`Transform`][^.]s.
-    - [`collate`][.]: a list-of-samples to batch transform. Can use exactly one
-      [`Collate`][^.].
-    - [`batch`][.]: a batch to batch transform; can be sequentially assembled
-      from one or more [`Transform`][^.]s.
-
-    Composition Rules:
-        - A full `Pipeline` can be sequentially pre-composed and/or
-          post-composed with one or more [`Transform`][^.]s; this is
-          implemented by [`generic.ComposedPipeline`][abstract_dataloader.].
-        - `Pipeline`s can always be composed in parallel; this is implemented
-          by [`generic.ParallelPipelines`][abstract_dataloader.].
+    | Method | Type | Description |
+    |--------|------|-------------|
+    | [`sample`][.] | `Raw -> Transformed` | A sample to sample transform; \
+        can be sequentially assembled from one or more [`Transform`][^.]s. |
+    | [`collate`][.] | `List[Transformed] -> Collated` | A list-of-samples to \
+        batch transform. Can use exactly one [`Collate`][^.]. |
+    | [`batch`][.] | `Collated -> Processed` | A batch to batch transform; \
+        can be sequentially assembled from one or more [`Transform`][^.]s. |
 
     Type Parameters:
         - `TRaw`: Input data format.
@@ -349,11 +326,7 @@ class Pipeline(
     """
 
     def sample(self, data: TRaw) -> TTransformed:
-        """Transform single samples.
-
-        - Operates on single samples, nominally on the CPU-side of a
-          dataloader.
-        - This method is both sequentially and parallel composable.
+        """Transform single samples, nominally on the CPU side.
 
         Args:
             data: A single `TRaw` data sample.
@@ -366,12 +339,15 @@ class Pipeline(
     def collate(self, data: Sequence[TTransformed]) -> TCollated:
         """Collate a list of data samples into a GPU-ready batch.
 
-        - Operates on the CPU-side of the dataloader, and is responsible for
-          aggregating individual samples into a batch (but not transferring to
-          the GPU).
-        - Analogous to the `collate_fn` of a
-          [pytorch dataloader](https://pytorch.org/docs/stable/data.html).
-        - This method is not sequentially composable.
+        This method is analogous to the `collate_fn` of a
+        [pytorch dataloader](https://pytorch.org/docs/stable/data.html),
+        and is responsible for aggregating individual samples into a batch on
+        the CPU side (but not transferring to the GPU).
+
+        !!! info "Pytorch Implementation"
+
+            We provide a generic implementation of this method in
+            [`ext.torch.Collate`][abstract_dataloader.].
 
         Args:
             data: A sequence of `TTransformed` data samples.
@@ -382,15 +358,11 @@ class Pipeline(
         ...
 
     def batch(self, data: TCollated) -> TProcessed:
-        """Transform data batch.
-
-        - Operates on a batch of data, nominally on the GPU-side of a
-          dataloader.
-        - This method is both sequentially and parallel composable.
+        """Transform data batch, nominally on the GPU side.
 
         !!! info "Implementation as `torch.nn.Module`"
 
-            If these `Transforms` require GPU state, it may be helpful to
+            If this `Pipeline` requires GPU state, it may be helpful to
             implement it as a `torch.nn.Module`. In this case, `batch`
             should redirect to `__call__`, which in turn redirects to
             [`nn.Module.forward`][torch.] in order to handle any registered

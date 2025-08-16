@@ -11,15 +11,7 @@
 
 The **abstract dataloader** (ADL) is a minimalist [specification](https://wiselabcmu.github.io/abstract-dataloader/spec/) for creating composable and interoperable dataloaders and data transformations, along with [abstract template implementations](https://wiselabcmu.github.io/abstract-dataloader/abstract/) and reusable [generic components](https://wiselabcmu.github.io/abstract-dataloader/generic/), including a [pytorch interface](https://wiselabcmu.github.io/abstract-dataloader/torch/).
 
-```
-Metadata─────────────────┐
-   │                     ▼
-   └────►Sensor   Synchronization
-           │             │
-           └────►Trace◄──┘
-                   │
-                   └────►Dataset───►Transform
-```
+![Abstract Dataloader Overview](https://wiselabcmu.github.io/abstract-dataloader/diagrams/overview.svg)
 
 The ADL's specifications and bundled implementations lean heavily on generic type annotations in order to enable type checking using static type checkers such as [mypy](https://mypy-lang.org/) or [pyright](https://microsoft.github.io/pyright/) and runtime (dynamic) type checkers such as [beartype](https://github.com/beartype/beartype) and [typeguard](https://github.com/agronholm/typeguard), even when applying functor-like generic transforms such as sequence loading and transforms.
 
@@ -46,6 +38,3 @@ While it is not necessary to install the `abstract_dataloader` in order to take 
 ```sh
 pip install abstract-dataloader
 ```
-
-> [!IMPORTANT]
-> To use the optional pytorch integrations, we also require either **`torch >= 2.2`** (first version to add `torch.utils._pytree.tree_leaves`) or **`torch` and [`optree >= 0.13`](https://github.com/metaopt/optree)** (first "mostly stable" version) in order to have access to a fully-featured tree manipulation module. The included `torch` extra will install the latest pytorch and optree, with constraints `torch >= 2.2` and `optree >= 0.13`.

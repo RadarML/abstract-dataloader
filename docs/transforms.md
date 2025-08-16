@@ -19,14 +19,6 @@ class Transform(Protocol, Generic[TRaw, TTransformed]):
         ...
 ```
 
-!!! composition-rules "Composition Rules"
-
-    `Transform`s can be sequentially composed, as long as the output type of the first is a subtype of the input of the second, e.g.
-    ```
-    Transform[T2, T3] (.) Transform[T1, T2] = Transform[T1, T3].
-    ```
-    This simple rule is implemented in [`abstract.Transform`][abstract_dataloader.abstract.Transform].
-
 ## Batching and Collation
 
 While clearly universal, the "all data processing is composed callables" is too vague, and not really helpful for organizing data transforms. To better categorize data transforms, we turn to analyzing batched operation.
@@ -48,10 +40,6 @@ class Collate(Protocol, Generic[TTransformed, TCollated]):
         ...
 ```
 
-!!! composition-rules "Composition Rules"
-
-    `Collate` cannot be composed, since samples can only be aggregated into     a batch once. However, like all transforms, they can be composed "in parallel" by routing different parts of a data structure to different `Collate` implementations.
-
 ## Pipelines
 
 A typical data processing pipeline consists of a CPU-side transform, a batching function, and a GPU-side transform. We formalize this using a [`Pipeline`][abstract_dataloader.spec.Pipeline], which collects these three components together into a generically typed container:
@@ -67,9 +55,3 @@ A typical data processing pipeline consists of a CPU-side transform, a batching 
     Since the only distinction between sample-to-sample and batch-to-batch transforms is the definition of a sample and a batch, which are inherently domain and implementation specific, we use the same generic [`Transform`][abstract_dataloader.spec.Transform] type for both [`Pipeline.sample`][abstract_dataloader.spec.Pipeline.sample] and [`Pipeline.batch`][abstract_dataloader.spec.Pipeline.batch], unlike [`Pipeline.collate`][abstract_dataloader.spec.Pipeline.collate], which accepts the distinct [`Collate`][abstract_dataloader.spec.Collate] type.
     
     Implementations may also be `.sample`/`.batch`-generic, for example using overloaded operators only, operating on pytorch `cpu` and `cuda` tensors, or having a `numpy`/`pytorch` switch. As such, we leave distinguishing `.sample` and `.batch` transforms up to the user.
-
-!!! composition-rules
-
-    Since they contain a [`Collate`][abstract_dataloader.spec.Collate] step, [`Pipeline`][abstract_dataloader.spec.Pipeline]s may not be sequentially composed. Again, like all transforms, they can be [composed "in parallel"][abstract_dataloader.generic.ParallelPipelines] by routing different parts of a data structure to different `Collate` implementations.
-
-    A [`Pipeline`][abstract_dataloader.spec.Pipeline] may also be [composed][abstract_dataloader.generic.ComposedPipeline] with additional [`Transform`][abstract_dataloader.spec.Transform]s before and after its `.sample` and `.batch`.

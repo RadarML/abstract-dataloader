@@ -93,31 +93,3 @@ def test_parallel():
     raw = [{"a": 1, "b": 2}, {"a": 3, "b": 4}]
     processed = _apply_pipeline(composed, raw)
     assert processed == {"a": [10, 30], "b": [5, 7]}
-
-
-def test_sequential():
-    """Test sequential composition."""
-    pipeline = abstract.Pipeline(collate=lambda data: data)
-
-    def pre(data):
-        return data * 2
-
-    def post(data):
-        return [x * 5 for x in data]
-
-    raw = [1, 2, 3]
-
-    composed = generic.ComposedPipeline(pipeline=pipeline, pre=pre, post=post)
-    processed = _apply_pipeline(composed, raw)
-    assert processed == [10, 20, 30]
-
-    composed = generic.ComposedPipeline(pipeline=pipeline, pre=pre)
-    processed = _apply_pipeline(composed, raw)
-    assert processed == [2, 4, 6]
-
-    composed = generic.ComposedPipeline(pipeline=pipeline, post=post)
-    processed = _apply_pipeline(composed, raw)
-    assert processed == [5, 10, 15]
-
-    composed = generic.ComposedPipeline(pipeline=pipeline)
-    assert _apply_pipeline(composed, raw) == _apply_pipeline(pipeline, raw)

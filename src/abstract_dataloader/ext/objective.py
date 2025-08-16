@@ -1,4 +1,4 @@
-"""Objective base classes and specifications.
+"""A flexible programming model for training objectives.
 
 !!! abstract "Programming Model"
 
