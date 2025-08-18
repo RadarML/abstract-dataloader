@@ -20,6 +20,7 @@ distributions:
 """
 
 import os
+from collections.abc import Iterable
 from typing import Any, Generic, Protocol, TypeVar
 
 import numpy as np
@@ -74,6 +75,10 @@ class Augmentations:
             return {k: v(self.rng) for k, v in self.augmentations.items()}
         else:
             return {}
+
+    def children(self) -> Iterable[Any]:
+        """Get all non-container child objects."""
+        return self.augmentations.values()
 
 
 class Bernoulli(Augmentation[bool]):

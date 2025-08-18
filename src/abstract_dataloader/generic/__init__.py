@@ -10,12 +10,12 @@ Other generic and largely reusable components can be added to this submodule.
     dependencies.
 """
 
-from .composition import ComposedPipeline, ParallelPipelines, ParallelTransforms
+from .composition import ParallelPipelines, ParallelTransforms
 from .sequence import Metadata, SequencePipeline, Window
 from .sync import Empty, Nearest, Next
 
 __all__ = [
-    "ComposedPipeline", "ParallelPipelines", "ParallelTransforms",
+    "ParallelPipelines", "ParallelTransforms",
     "Metadata", "SequencePipeline", "Window",
     "Empty", "Nearest", "Next"
 ]

@@ -1,4 +1,4 @@
-"""Objective base classes and specifications.
+"""A flexible programming model for training objectives.
 
 !!! abstract "Programming Model"
 
@@ -10,9 +10,9 @@
 """
 
 from abc import abstractmethod
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
-from typing import Any, Generic, Protocol, TypeVar, cast, runtime_checkable
+from typing import Any, Generic, Protocol, cast, runtime_checkable
 
 import numpy as np
 import wadler_lindig as wl
@@ -180,17 +180,14 @@ class MultiObjectiveSpec(Generic[YTrue, YPred, YTrueAll, YPredAll]):
         """Index into data using the key or callable."""
         def dereference(obj, k):
             if isinstance(obj, Mapping):
-                try:
-                    return obj[k]
-                except KeyError as e:
-                    raise KeyError(
-                        f"Key {k} not found: {wl.pformat(obj)}") from e
+                if k not in obj:
+                    raise KeyError(f"Key {k} not found: {wl.pformat(obj)}")
+                return obj[k]
             else:
-                try:
-                    return getattr(obj, k)
-                except AttributeError as e:
+                if not hasattr(obj, k):
                     raise AttributeError(
-                        f"Attribute {k} not found: {wl.pformat(obj)}") from e
+                        f"Attribute {k} not found: {wl.pformat(obj)}")
+                return getattr(obj, k)
 
         if isinstance(key, str):
             return dereference(data, key)
@@ -304,3 +301,8 @@ class MultiObjective(Objective[TArray, YTrue, YPred]):
             for name, image in k_rendered.items():
                 rendered[f"{k}/{name}"] = image
         return rendered
+
+    def children(self) -> Iterable[Any]:
+        """Get all non-container child objects."""
+        for v in self.objectives.values():
+            yield v.objective

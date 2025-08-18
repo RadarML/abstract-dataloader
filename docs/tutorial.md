@@ -77,7 +77,7 @@ def apply_pipeline(indices: Sequence[int], dataset: Dataset, pipeline: Pipeline)
 
     Assuming you are using pytorch, the following building blocks may be helpful:
 
-    - Use [`TransformedDataset`][abstract_dataloader.torch.TransformedDataset], which provides a pytorch map-style dataset with a pipeline's `.transform` applied.
+    - Use [`TransformedDataset`][abstract_dataloader.ext.torch.TransformedDataset], which provides a pytorch map-style dataset with a pipeline's `.transform` applied.
     - Pass `Pipeline.collate` as the `collate_fn` for a pytorch [`DataLoader`][torch.utils.data.DataLoader].
     - If you are using pytorch lightning, [`ext.lightning.ADLDataModule`][abstract_dataloader.ext.lightning.ADLDataModule] can also handle `.transform`, `.collate`, and a number of other common data marshalling steps for you.
 
@@ -91,4 +91,6 @@ If you don't have a complete `Pipeline` implementation but instead have separate
 
 !!! info
 
-    For pytorch users, a reference collate function is provided as [`abstract_dataloader.torch.Collate`][abstract_dataloader.torch.Collate], which can handle common pytorch tensor operations and data structures.
+    For pytorch users, a reference collate function is provided as [`abstract_dataloader.ext.torch.Collate`][abstract_dataloader.ext.torch.Collate], which can handle common pytorch tensor operations and data structures.
+
+    If your `Pipeline` contains any [`torch.nn.Module`][torch.nn.Module]s, you may find [`abstract_dataloader.ext.torch.Pipeline`][abstract_dataloader.ext.torch.Pipeline] helpful, which will automatically register these for you.

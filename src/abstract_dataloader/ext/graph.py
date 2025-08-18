@@ -9,7 +9,7 @@
         of inputs and produces a set of outputs.
 """
 
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -109,9 +109,17 @@ class Transform(spec.Transform[dict[str, Any], dict[str, Any]]):
         self, outputs: Mapping[str, str] | None = None, keep_all: bool = False,
         **nodes: Node | dict[str, Any]
     ) -> None:
-        self.nodes = {
-            k: v if isinstance(v, Node) else Node(**v)
-            for k, v in nodes.items()}
+        self.nodes = {}
+        for k, v in nodes.items():
+            if not isinstance(v, Node):
+                try:
+                    v = Node(**v)
+                except TypeError as e:
+                    raise TypeError(
+                        f"Node '{k}' is not a valid Node specification: "
+                        f"{wl.pformat(v)}") from e
+            self.nodes[k] = v
+
         self.outputs = outputs
         self.keep_all = keep_all
 
@@ -170,3 +178,12 @@ class Transform(spec.Transform[dict[str, Any], dict[str, Any]]):
                 return {k: data[v] for k, v in self.outputs.items()}
         else:
             return data
+
+    def children(self) -> Iterable[Any]:
+        """Get all non-container child objects."""
+        for node in self.nodes.values():
+            yield node.transform
+
+    def __repr__(self) -> str:
+        """Friendly name."""
+        return f"TransformGraph({', '.join(self.nodes.keys())})"

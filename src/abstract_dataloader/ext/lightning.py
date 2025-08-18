@@ -1,4 +1,4 @@
-"""Dataloader / Pytorch Bridge.
+"""Dataloader / Pytorch Lightning Datamodule bridge.
 
 !!! warning
 
@@ -32,7 +32,7 @@ import numpy as np
 from torch.utils.data import DataLoader
 
 from abstract_dataloader import spec
-from abstract_dataloader import torch as adl_torch
+from abstract_dataloader.ext.torch import TransformedDataset
 
 from .sample import SampledDataset
 
@@ -170,7 +170,7 @@ class ADLDataModule(
     @cache
     def dataset(
         self, split: Literal["train", "val", "test"] = "train"
-    ) -> adl_torch.TransformedDataset[Raw, Transformed]:
+    ) -> TransformedDataset[Raw, Transformed]:
         """Get dataset for a given split, with sample transformation applied.
 
         !!! info
@@ -202,8 +202,7 @@ class ADLDataModule(
         if subsample is not None:
             dataset = SampledDataset(dataset, subsample)
 
-        return adl_torch.TransformedDataset(
-            dataset, transform=self.transforms.sample)
+        return TransformedDataset(dataset, transform=self.transforms.sample)
 
     def train_dataloader(self) -> DataLoader:
         """Get training dataloader (`shuffle=True, drop_last=True`)."""

@@ -5,7 +5,7 @@ from beartype.claw import beartype_package
 
 beartype_package("abstract_dataloader")
 
-from abstract_dataloader.ext import graph
+from abstract_dataloader.ext import graph  # noqa: E402
 
 
 def test_basic():
@@ -80,9 +80,13 @@ def test_multi_output():
                 inputs={"a": "a"}))
         transformed = tf({"a": 1})
 
-    with pytest.raises(TypeError, match="Node 'node' output is expected to be a sequence"):
+    with pytest.raises(
+            TypeError,
+            match="Node 'node' output is expected to be a sequence"
+    ):
         tf = graph.Transform(
             node=graph.Node(
-                transform=_node_single, output=["o1", "o2"], inputs={"a": "a"}))
+                transform=_node_single,
+                output=["o1", "o2"], inputs={"a": "a"}))
         transformed = tf({"a": 1})
 

@@ -2,8 +2,8 @@ site_name: Abstract Dataloader
 repo_url: https://github.com/WiseLabCMU/abstract-dataloader
 repo_name: abstract-dataloader
 nav:
-  - ADL:
-    - About: index.md
+  - About:
+    - Home: index.md
     - Programming Model:
       - Data Loading: dataloader.md
       - Data Transforms: transforms.md
@@ -12,11 +12,10 @@ nav:
       - Usage: guide.md
       - Verification: verification.md
       - Type Systems: types.md
-    - Abstract Dataloader:
-      - Spec: spec.md
-      - Abstract: abstract.md
-      - Generic: generic.md
-      - Torch: torch.md
+  - API:
+    - Spec: spec.md
+    - Abstract: abstract.md
+    - Generic: generic.md
   - Extensions:
     - About: extensions/index.md
     - Augment: extensions/augment.md
@@ -24,6 +23,7 @@ nav:
     - Lightning: extensions/lightning.md
     - Objective: extensions/objective.md
     - Sampling: extensions/sample.md
+    - Torch: extensions/torch.md
     - Types: extensions/types.md
 
 extra_css:

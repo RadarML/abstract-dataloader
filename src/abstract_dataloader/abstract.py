@@ -34,9 +34,9 @@ types.
 """
 
 from abc import ABC, abstractmethod
-from collections.abc import Iterator, Mapping, Sequence
+from collections.abc import Iterable, Iterator, Mapping, Sequence
 from functools import cached_property
-from typing import TypeVar, cast, overload
+from typing import Any, TypeVar, cast, overload
 
 import numpy as np
 from jaxtyping import Int64, Integer
@@ -139,8 +139,7 @@ class Sensor(ABC, spec.Sensor[TSample, TMetadata]):
         # `n` samples cover `n-1` periods!
         return (len(self) - 1) / self.duration
 
-    def __repr__(self) -> str:
-        """Get friendly representation for inspection and debugging."""
+    def __repr__(self) -> str:  # noqa: D105
         return f"{self.__class__.__name__}({self.name}, n={len(self)})"
 
 
@@ -148,7 +147,7 @@ class Trace(spec.Trace[TSample]):
     """A trace, consisting of multiple simultaneously-recording sensors.
 
     Type Parameters:
-        `Sample`: sample data type which this `Sensor` returns. As a
+        - `Sample`: sample data type which this `Sensor` returns. As a
             convention, we suggest returning "batched" data by default, i.e.
             with a leading singleton axis.
 
@@ -215,7 +214,7 @@ class Trace(spec.Trace[TSample]):
 
         Returns:
             Loaded sample if `index` is an integer type, or the appropriate
-            [`Sensor`][abstract_dataloader.spec.] if `index` is a `str`.
+                [`Sensor`][abstract_dataloader.spec.] if `index` is a `str`.
         """
         if isinstance(index, str):
             return self.sensors[index]
@@ -239,20 +238,21 @@ class Trace(spec.Trace[TSample]):
         else:
             return list(self.indices.values())[0].shape[0]
 
-    def __repr__(self) -> str:
-        """Friendly representation."""
+    def __repr__(self) -> str:  # noqa: D105
         sensors = ", ".join(self.sensors.keys())
         return (
             f"{self.__class__.__name__}({self.name}, {len(self)}x[{sensors}])")
+
+    def children(self) -> Iterable[Any]:
+        """Get all child objects."""
+        return self.sensors.values()
 
 
 class Dataset(spec.Dataset[TSample]):
     """A dataset, consisting of multiple traces, nominally concatenated.
 
     Type Parameters:
-        `Sample`: sample data type which this `Sensor` returns. As a
-            convention, we suggest returning "batched" data by default, i.e.
-            with a leading singleton axis.
+        - `TSample`: sample data type which this `Sensor` returns.
 
     Args:
         traces: traces which make up this dataset.
@@ -322,11 +322,14 @@ class Dataset(spec.Dataset[TSample]):
         """
         return self.indices[-1].item()
 
-    def __repr__(self) -> str:
-        """Friendly representation."""
+    def __repr__(self) -> str:  # noqa: D105
         return (
             f"{self.__class__.__name__}"
             f"({len(self.traces)} traces, n={len(self)})")
+
+    def children(self) -> Iterable[Any]:
+        """Get all child objects."""
+        return self.traces
 
 
 TRaw = TypeVar("TRaw")
@@ -369,6 +372,10 @@ class Transform(spec.Transform[TRaw, TTransformed]):
             data = tf(data)
         return cast(TTransformed, data)
 
+    def children(self) -> Iterable[Any]:
+        """Get all non-container child objects."""
+        return self.transforms
+
 
 class Collate(spec.Collate[TTransformed, TCollated]):
     """Data collation.
@@ -395,15 +402,6 @@ class Pipeline(
 ):
     """Dataloader transform pipeline.
 
-    Composition Rules:
-        - A full `Pipeline` can be sequentially pre-composed and/or
-          post-composed with one or more [`Transform`][^.]s; this is
-          implemented by [`generic.ComposedPipeline`][abstract_dataloader.].
-        - `Pipeline`s can always be composed in parallel; this is implemented
-          by [`generic.ParallelPipelines`][abstract_dataloader.], with a
-          pytorch [`nn.Module`][torch.]-compatible version in
-          [`torch.ParallelPipelines`][abstract_dataloader.].
-
     Type Parameters:
         - `TRaw`: Input data format.
         - `TTransformed`: Data after the first `transform` step.
@@ -424,19 +422,19 @@ class Pipeline(
         collate: spec.Collate[TTransformed, TCollated] | None = None,
         batch: spec.Transform[TCollated, TProcessed] | None = None
     ) -> None:
+        self._children = []
         if sample is not None:
             self.sample = sample
+            self._children.append(sample)
         if collate is not None:
             self.collate = collate
+            self._children.append(collate)
         if batch is not None:
             self.batch = batch
+            self._children.append(batch)
 
     def sample(self, data: TRaw) -> TTransformed:
         """Transform single samples.
-
-        - Operates on single samples, nominally on the CPU-side of a
-          dataloader.
-        - This method is both sequentially and parallel composable.
 
         Fallback:
             The identity transform is provided by default
@@ -453,13 +451,6 @@ class Pipeline(
     def collate(self, data: Sequence[TTransformed]) -> TCollated:
         """Collate a list of data samples into a GPU-ready batch.
 
-        - Operates on the CPU-side of the dataloader, and is responsible for
-          aggregating individual samples into a batch (but not transferring to
-          the GPU).
-        - Analogous to the `collate_fn` of a
-          [pytorch dataloader](https://pytorch.org/docs/stable/data.html).
-        - This method is not sequentially composable.
-
         Args:
             data: A sequence of `TTransformed` data samples.
 
@@ -471,19 +462,12 @@ class Pipeline(
     def batch(self, data: TCollated) -> TProcessed:
         """Transform data batch.
 
-        - Operates on a batch of data, nominally on the GPU-side of a
-          dataloader.
-        - This method is both sequentially and parallel composable.
+        !!! warning
 
-        !!! info "Implementation as `torch.nn.Module`"
-
-            If this `Pipeline` requires GPU state, and the GPU components
-            are tied to CPU-side or collation functions (so cannot be
-            separated and implemented separately) it may be helpful to
-            implement the `Pipeline` as a `torch.nn.Module`. In this case,
-            `batch` should redirect to `__call__`, which in turn redirects to
-            [`nn.Module.forward`][torch.] in order to handle any registered
-            pytorch hooks.
+            If this `Pipeline` requires GPU state in Pytorch, use
+            [`ext.torch.Pipeline`][abstract_dataloader.ext.torch.Pipeline]
+            instead, which implements the pipeline as a
+            [`torch.nn.Module`][torch.nn.Module] instead.
 
         Fallback:
             The identity transform is provided by default
@@ -497,3 +481,7 @@ class Pipeline(
             The `TProcessed` output, ready for the downstream model.
         """
         return cast(TProcessed, data)
+
+    def children(self) -> Iterable[Any]:
+        """Get all non-container child objects."""
+        return self._children

@@ -164,15 +164,19 @@ Finally, in order to allow cross-compatibility between projects without having t
 
     There is currently no way to add custom node support to `torch.utils._pytree`, which is used by `default_collate`. Instead, we must provide a custom collate function with a supported pytree library, such as [optree](https://github.com/metaopt/optree).
 
-    - If dataclasses are registered with the optree root namespace, then the [`torch.Collate`][abstract_dataloader.torch.Collate] implementation which we provide is sufficient, as long as `optree` is installed.
+    === "Global Registration"
+
+        If dataclasses are registered with the optree root namespace, then the [`ext.torch.Collate`][abstract_dataloader.ext.torch.Collate] implementation which we provide is sufficient, as long as `optree` is installed.
         ```python
         from optree.dataclasses import dataclass as optree_dataclass
-        from optree.registry import __GLOBAL_NAMESPACE
 
-        dataclass = partial(optree_dataclass, namespace=__GLOBAL_NAMESPACE)
+        dataclass = partial(optree_dataclass, namespace='')
         ```
+        We also provide a pre-patched `dataclass` transform (with types set up correctly) in [`ext.types.dataclass`][abstract_dataloader.ext.types.dataclass].
 
-    - If dataclasses are registered with a named optree namespace, then a custom collate function should be provided which uses that namespace:
+    === "Namespaced Registration"
+
+        If dataclasses are registered with a named optree namespace, then a custom collate function should be provided which uses that namespace:
         ```python
         def collate_fn(data: Sequence[TRaw]) -> TCollated:
             # Use the namespace provided to `optree.dataclasses.dataclass`

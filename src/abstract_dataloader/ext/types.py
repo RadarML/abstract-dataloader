@@ -7,10 +7,6 @@
     - Set each class as `Generic[TArray]`, where [`TArray`][.] is a `TypeVar`
         which is [`ArrayLike`][.], e.g., `torch.Tensor`, `jax.Array` or
         `np.ndarray`.
-
-!!! warning
-
-    This module requires `optree` to be installed.
 """
 
 from dataclasses import field

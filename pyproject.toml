@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "abstract_dataloader"
-version = "0.3.6"
+version = "0.4.0"
 authors = [
   { name="Tianshu Huang", email="tianshu2@andrew.cmu.edu" },
 ]
@@ -24,9 +24,10 @@ license-files = ["LICEN[CS]E*"]
 
 dependencies = [
     "numpy >= 1.14",
+    "optree >= 0.16",
     "jaxtyping >= 0.2.32",
     "typing-extensions >= 3.12",
-    "wadler_lindig >= 0.1.3"    # included by jaxtyping, but explicitly
+    "wadler_lindig >= 0.1.3",   # included by jaxtyping, but explicitly
                                 # specified here since we also use it
 ]
 
@@ -52,7 +53,6 @@ dev = [
     "pytest",
     "pytest-cov",
     "beartype >= 0.20.0",
-    "optree >= 0.13",
     "torch >= 2.2",
     "pyright >= 1.0.0",
     "ruff >= 0.10.0",
@@ -70,13 +70,15 @@ indent-width = 4
 
 [tool.ruff.lint]
 select = [
-    "W", "N", "I", "D", "NPY"
+    "E", "F", "W", "N", "I", "D", "NPY"
 ]
 ignore = [
     "D102",  # Inheriting docstrings is allowed
     "D107",  # Initializer goes in the class docstring
     "D401",  # "Imperative mood" NLP doesn't always make sense
     "D413",  # No blank lines after section is preferred by mkdocstrings
+    "F722",  # Jaxtyping annotations confuse ruff
+    "F821",
 
     # Must pick one...
     "D213",  # Pick 'multi-line-summary-first-line'.

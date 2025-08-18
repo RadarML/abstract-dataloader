@@ -32,6 +32,7 @@ def test_empty():
     for k in ts:
         assert empty[k].shape == (0,)
 
+
 @pytest.mark.parametrize("reference", ["sensor1", "sensor2", "sensor3"])
 def test_next(reference):
     """generic.Next."""
