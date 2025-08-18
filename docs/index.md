@@ -7,11 +7,6 @@
 [![CI](https://github.com/WiseLabCMU/abstract-dataloader/actions/workflows/ci.yml/badge.svg)](https://github.com/WiseLabCMU/abstract-dataloader/actions/workflows/ci.yml)
 ![GitHub issues](https://img.shields.io/github/issues/WiseLabCMU/abstract-dataloader)
 
-<div class="grid cards" markdown>
-
-</div>
-
-
 ## What is the Abstract Dataloader?
 
 ??? question "Why Abstract?"
@@ -67,6 +62,10 @@ As an explicit goal is to minimize dependency constraints, only the following de
 
 - **`python >= 3.10`**: a somewhat recent version of python is required, since the python type annotation specifications are rapidly evolving. 
 
+    !!! example "Minimum Python Version"
+
+        We may consider upgrading our minimum python version in the future, since `3.11` and newer versions support useful typing-related features such as the [`Self` type](https://docs.python.org/3/whatsnew/3.11.html).
+
 - **`optree >= 3.16`**: a powerful manipulation tool for arbitrary nested structures (["pytrees"](https://github.com/metaopt/optree)).
 
 - **`numpy >= 1.14`**: any remotely recent version of numpy is compatible, with the `1.14` minimum version only being required since this version first defined the `np.integer` type.
@@ -74,10 +73,6 @@ As an explicit goal is to minimize dependency constraints, only the following de
 - **`jaxtyping >= 0.2.32`**: a fairly recent version of jaxtyping is also required due to the rapid pace of type annotation tooling. In particular, `jaxtyping 0.2.32` added support for `TypeVar` as array types, which is helpful for expressing [array type polymorphisms](https://github.com/patrick-kidger/jaxtyping/releases/tag/v0.2.32).
 
 - **`typing_extensions >= 3.12`**: we [pull forward](https://typing-extensions.readthedocs.io/en/latest/) typing features from Python 3.12. This minimum version may be increased as we use newer typing features.
-
-!!! example "Minimum Python Version"
-
-    We may consider upgrading our minimum python version in the future, since `3.11` and newer versions support useful typing-related features such as the [`Self` type](https://docs.python.org/3/whatsnew/3.11.html).
 
 ## Contributing
 

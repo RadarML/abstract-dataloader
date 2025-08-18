@@ -13,18 +13,18 @@ nav:
       - Verification: verification.md
       - Type Systems: types.md
   - API:
-    - Spec: spec.md
-    - Abstract: abstract.md
-    - Generic: generic.md
+    - spec: spec.md
+    - abstract: abstract.md
+    - generic: generic.md
   - Extensions:
-    - About: extensions/index.md
-    - Augment: extensions/augment.md
-    - Graph: extensions/graph.md
-    - Lightning: extensions/lightning.md
-    - Objective: extensions/objective.md
-    - Sampling: extensions/sample.md
-    - Torch: extensions/torch.md
-    - Types: extensions/types.md
+    - Overview: extensions/index.md
+    - ext.augment: extensions/augment.md
+    - ext.graph: extensions/graph.md
+    - ext.lightning: extensions/lightning.md
+    - ext.objective: extensions/objective.md
+    - ext.sampling: extensions/sample.md
+    - ext.torch: extensions/torch.md
+    - ext.types: extensions/types.md
 
 extra_css:
   - stylesheets/extra.css
