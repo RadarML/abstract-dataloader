@@ -40,7 +40,9 @@ class SampledDataset(spec.Dataset[TSample], Generic[TSample]):
 
     Args:
         dataset: underlying dataset.
-        samples: target number of samples.
+        samples: target number of samples; if greater than the dataset size,
+            it will be capped at the dataset size. If a `float` in `[0, 1]`,
+            it is treated as a proportion of the dataset size.
         seed: sampler seed.
         mode: sampling mode.
     """
@@ -49,12 +51,13 @@ class SampledDataset(spec.Dataset[TSample], Generic[TSample]):
         self, dataset: spec.Dataset[TSample], samples: int | float,
         seed: int | float = 0,
         mode: Literal["ld", "uniform", "random"]
-            | Callable[[int], Integer[np.ndarray, "N"]] = "ld"
+            | Callable[[int], Integer[np.ndarray, "N"]] = "ld",
     ) -> None:
         self.dataset = dataset
 
         if isinstance(samples, float):
             samples = int(samples * len(dataset))
+        samples = min(samples, len(dataset))
 
         if mode == "ld":
             self.subset = sample_ld(len(dataset), samples=samples, seed=seed)

@@ -49,3 +49,6 @@ def test_sampled_dataset():
     # Technically illegal, but easy way to check it's being applied correctly
     dataset = sample.SampledDataset(Dataset(), 10, mode=lambda x: np.arange(3))
     assert len(dataset) == 3
+
+    dataset = sample.SampledDataset(Dataset(), 30, mode="ld")
+    assert len(dataset) == 20  # capped at dataset size
