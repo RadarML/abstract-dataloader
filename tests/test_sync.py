@@ -19,9 +19,9 @@ def test_sync_types():
 
 def _make_timestamps():
     return {
-        "sensor1": np.array([0.0, 1.0, 2.0, 3.0, 4.0, 5.0], dtype=np.float64),
-        "sensor2": np.array([0.5, 1.5, 2.5, 3.5, 4.5], dtype=np.float64),
-        "sensor3": np.array([1.0, 2.0, 3.0, 4.0], dtype=np.float64),
+        "sensor1": np.arange(8, dtype=np.float64),
+        "sensor2": np.arange(7, dtype=np.float64) + 0.5,
+        "sensor3": np.arange(6, dtype=np.float64) + 1.0
     }
 
 
@@ -51,18 +51,20 @@ def test_next(reference):
 
 def test_next_margin():
     """generic.Next, with margin."""
+    sync_ref = generic.Next("sensor1")
     ts = _make_timestamps()
 
     sync = generic.Next("sensor1", margin=(1, 1))
     indices = sync(ts)
-    assert indices["sensor1"].shape[0] == 1
-    assert np.allclose(indices["sensor1"], [2])
+    ts_ref = {k: v[1:-1] for k, v in ts.items()}
+    indices_ref = sync_ref(ts_ref)
+    assert all(np.array_equal(indices[k], indices_ref[k] + 1) for k in ts)
 
     sync2 = generic.Next("sensor1", margin=(0.1, 1.1))
     indices = sync2(ts)
-    assert indices["sensor1"].shape[0] == 1
-    assert np.allclose(indices["sensor1"], [2])
-
+    ts2_ref = {k: v[1:-2] for k, v in ts.items()}
+    indices2_ref = sync_ref(ts2_ref)
+    assert all(np.array_equal(indices[k], indices2_ref[k] + 1) for k in ts)
 
 def test_next_missing():
     """generic.Next, missing reference."""
@@ -107,12 +109,28 @@ def test_nearest_margin():
     """generic.Nearest, with margin."""
     ts = _make_timestamps()
 
-    sync = generic.Nearest("sensor1", tol=1.0, margin=(1, 1))
-    indices = sync(ts)
-    assert indices["sensor1"].shape[0] == 4
-    assert np.allclose(indices["sensor1"], [1, 2, 3, 4])
+    sync_ref = generic.Nearest("sensor1")
 
-    sync2 = generic.Nearest("sensor1", tol=1.0, margin=(0.1, 1.1))
+    sync = generic.Nearest("sensor1", margin=(1, 1))
+    indices = sync(ts)
+    ts_ref = {k: v[1:-1] for k, v in ts.items()}
+    indices_ref = sync_ref(ts_ref)
+    assert all(np.array_equal(indices[k], indices_ref[k] + 1) for k in ts)
+
+    sync2 = generic.Nearest("sensor1", margin=(0.1, 1.1))
     indices = sync2(ts)
-    assert indices["sensor1"].shape[0] == 3
-    assert np.allclose(indices["sensor1"], [1, 2, 3])
+    ts2_ref = {k: v[1:-2] for k, v in ts.items()}
+    indices2_ref = sync_ref(ts2_ref)
+    assert all(np.array_equal(indices[k], indices2_ref[k] + 1) for k in ts)
+
+
+def test_arg_checking():
+    """Test argument checking for `abstract.Synchronization`."""
+    with pytest.raises(TypeError):
+        generic.Next(reference="sensor1", margin={"sensor1": (1,)})
+
+    with pytest.raises(TypeError):
+        generic.Next(reference="sensor1", margin={"sensor1": (1, 2, 3)})
+
+    with pytest.raises(TypeError):
+        generic.Next(reference="sensor1", margin=[1, 2, 3])

@@ -39,10 +39,10 @@ from functools import cached_property
 from typing import Any, TypeVar, cast, overload
 
 import numpy as np
-from jaxtyping import Int64, Integer
+from jaxtyping import Float, Int64, Integer
 
 from . import spec
-from .spec import Metadata, Synchronization
+from .spec import Metadata
 
 __all__ = [
     "Dataset", "Metadata", "Sensor", "Synchronization", "Trace", "Pipeline",
@@ -485,3 +485,133 @@ class Pipeline(
     def children(self) -> Iterable[Any]:
         """Get all non-container child objects."""
         return self._children
+
+
+class Synchronization(ABC, spec.Synchronization):
+    """Synchronization protocol for asynchronous time-series.
+
+    This base class implements an optional `reference` sensor abstraction, and
+    a `margin` calculation, which allows excluding samples at the start and end
+    of each sensor recording.
+
+    !!! info "Reference Sensor"
+
+        Synchronization is performed with respect to the timestamps of a
+        "reference sensor", which must be present in the provided timestamps.
+
+    !!! info "Margin Calculation"
+
+        Samples at the start and end of each sensor recording can optionally be
+        excluded:
+
+        - The `(start, end)` of each margin can be freely specified as either a
+            time margin (in seconds; `float`) or an index margin (in samples;
+            `int`).
+        - The margin can also be specified for all sensors uniformly (as just a
+            `Sequence: (start, end)`) or per-sensor via a `Mapping[str, ...]`.
+        - If specified per sensor, any sensors not included in the `margin`
+            will default to no margin (i.e., `(0, 0)`).
+
+    Args:
+        reference: reference sensor to synchronize to.
+        margin: time/index margin to apply.
+    """
+
+    def __init__(
+        self, reference: str,
+        margin: Mapping[str, Sequence[int | float]]
+            | Sequence[int | float] = {}
+    ) -> None:
+        # Make sure margin spec is valid.
+        # This step is needed since many configuration systems (*cough* Hydra)
+        # do not properly handle tuples, so there's no easy way to specify a
+        # `tuple[int, int]` input. We instead allow any `Sequence[int]` and
+        # manually check at runtime.
+        if isinstance(margin, Sequence):
+            if len(margin) != 2:
+                raise TypeError(
+                    f"Margin must be a sequence of length 2, got "
+                    f"{len(margin)}: {margin}")
+        else:
+            for k, v in margin.items():
+                if len(v) != 2:
+                    raise TypeError(
+                        f"Margin for sensor {k} must be a sequence of length "
+                        f"2, got {len(v)}: {v}")
+
+        self.reference = reference
+        if isinstance(margin, Sequence):
+            self._default = margin
+            self._margin = {}
+        else:
+            self._default = (0, 0)
+            self._margin = margin
+
+    def apply_margin(
+        self, timestamps: Mapping[str, Float[np.ndarray, "_N"]],
+    ) -> tuple[dict[str, int], dict[str, int]]:
+        """Apply margin to timestamps, returning start and end indices.
+
+        Args:
+            timestamps: timestamps by sensor name.
+
+        Returns:
+            `(start, end)` indices by sensor name.
+        """
+        start = {}
+        end = {}
+        for k, t_sensor in timestamps.items():
+            left, right = self._margin.get(k, self._default)
+
+            start[k] = (
+                left if isinstance(left, int)
+                else np.searchsorted(
+                    t_sensor, t_sensor[0] + left, side='left').item())
+            end[k] = (
+                len(t_sensor) - 1 - right if isinstance(right, int)
+                else np.searchsorted(
+                    t_sensor, t_sensor[-1] - right, side='right').item() - 1)
+
+        return start, end
+
+    def get_reference(
+        self, timestamps: Mapping[str, Float[np.ndarray, "_N"]]
+    ) -> Float[np.ndarray, "_M"]:
+        """Get valid reference sensor timestamps.
+
+        Args:
+            timestamps: input sensor timestamps.
+
+        Returns:
+            Reference sensor timestamps.
+        """
+        if self.reference not in timestamps:
+            raise KeyError(
+                f"Reference sensor {self.reference} was not provided in "
+                f"timestamps, with keys: {list(timestamps.keys())}")
+
+        start, end = self.apply_margin(timestamps)
+        t_start = max(timestamps[k][start[k]] for k in timestamps)
+        t_end = min(timestamps[k][end[k]] for k in timestamps)
+
+        t_ref = timestamps[self.reference]
+        start_idx = np.searchsorted(t_ref, t_start, side='left')
+        end_idx = np.searchsorted(t_ref, t_end, side='right')
+        return t_ref[start_idx:end_idx]
+
+    @abstractmethod
+    def __call__(
+        self, timestamps: dict[str, Float[np.ndarray, "_N"]]
+    ) -> dict[str, Integer[np.ndarray, "M"]]:
+        """Apply synchronization protocol.
+
+        Args:
+            timestamps: sensor timestamps. Each key denotes a different sensor
+                name, and the value denotes the timestamps for that sensor.
+
+        Returns:
+            A dictionary, where keys correspond to each sensor, and values
+                correspond to the indices which map global indices to sensor
+                indices, i.e. `global[sensor, i] = sensor[sync[sensor] [i]]`.
+        """
+        ...
