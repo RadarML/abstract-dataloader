@@ -490,8 +490,8 @@ class Pipeline(
 class Synchronization(ABC, spec.Synchronization):
     """Synchronization protocol for asynchronous time-series.
 
-    This base class implements an optional "reference sensor" abstraction, and
-    a "margin" calculation, which allows excluding samples at the start and end
+    This base class implements an optional `reference` sensor abstraction, and
+    a `margin` calculation, which allows excluding samples at the start and end
     of each sensor recording.
 
     !!! info "Reference Sensor"
