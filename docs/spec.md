@@ -1,6 +1,5 @@
 ::: abstract_dataloader.spec
     options:
-        heading: "Abstract Dataloader Specifications"
         members:
         - Metadata
         - Sensor

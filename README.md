@@ -9,7 +9,7 @@
 
 ## What is the Abstract Dataloader?
 
-The **abstract dataloader** (ADL) is a minimalist [specification](https://wiselabcmu.github.io/abstract-dataloader/spec/) for creating composable and interoperable dataloaders and data transformations, along with [abstract template implementations](https://wiselabcmu.github.io/abstract-dataloader/abstract/) and reusable [generic components](https://wiselabcmu.github.io/abstract-dataloader/generic/), including a [pytorch interface](https://wiselabcmu.github.io/abstract-dataloader/torch/).
+The **abstract dataloader** (ADL) is a minimalist [specification](https://wiselabcmu.github.io/abstract-dataloader/spec/) for creating composable and interoperable dataloaders and data transformations, along with [abstract template implementations](https://wiselabcmu.github.io/abstract-dataloader/abstract/) and reusable [generic components](https://wiselabcmu.github.io/abstract-dataloader/generic/).
 
 ![Abstract Dataloader Overview](https://wiselabcmu.github.io/abstract-dataloader/diagrams/overview.svg)
 
