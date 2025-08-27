@@ -3,22 +3,22 @@
 [![pypi version](https://img.shields.io/pypi/v/abstract-dataloader.svg)](https://pypi.org/project/abstract-dataloader/)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/abstract-dataloader)
 ![PyPI - Types](https://img.shields.io/pypi/types/abstract-dataloader)
-![GitHub](https://img.shields.io/github/license/WiseLabCMU/abstract-dataloader)
-[![CI](https://github.com/WiseLabCMU/abstract-dataloader/actions/workflows/ci.yml/badge.svg)](https://github.com/WiseLabCMU/abstract-dataloader/actions/workflows/ci.yml)
-![GitHub issues](https://img.shields.io/github/issues/WiseLabCMU/abstract-dataloader)
+![GitHub](https://img.shields.io/github/license/RadarML/abstract-dataloader)
+[![CI](https://github.com/RadarML/abstract-dataloader/actions/workflows/ci.yml/badge.svg)](https://github.com/RadarML/abstract-dataloader/actions/workflows/ci.yml)
+![GitHub issues](https://img.shields.io/github/issues/RadarML/abstract-dataloader)
 
 ## What is the Abstract Dataloader?
 
-The **abstract dataloader** (ADL) is a minimalist [specification](https://wiselabcmu.github.io/abstract-dataloader/spec/) for creating composable and interoperable dataloaders and data transformations, along with [abstract template implementations](https://wiselabcmu.github.io/abstract-dataloader/abstract/) and reusable [generic components](https://wiselabcmu.github.io/abstract-dataloader/generic/).
+The **abstract dataloader** (ADL) is a minimalist [specification](https://radarml.github.io/abstract-dataloader/spec/) for creating composable and interoperable dataloaders and data transformations, along with [abstract template implementations](https://radarml.github.io/abstract-dataloader/abstract/) and reusable [generic components](https://radarml.github.io/abstract-dataloader/generic/).
 
-![Abstract Dataloader Overview](https://wiselabcmu.github.io/abstract-dataloader/diagrams/overview.svg)
+![Abstract Dataloader Overview](https://radarml.github.io/abstract-dataloader/diagrams/overview.svg)
 
 The ADL's specifications and bundled implementations lean heavily on generic type annotations in order to enable type checking using static type checkers such as [mypy](https://mypy-lang.org/) or [pyright](https://microsoft.github.io/pyright/) and runtime (dynamic) type checkers such as [beartype](https://github.com/beartype/beartype) and [typeguard](https://github.com/agronholm/typeguard), even when applying functor-like generic transforms such as sequence loading and transforms.
 
 > [!TIP]
 > Since the abstract dataloader uses python's [structural subtyping](https://typing.python.org/en/latest/spec/protocol.html) - `Protocol` - feature, the `abstract_dataloader` is not a required dependency for using the abstract dataloader! Implementations which follow the specifications are fully interoperable, including with type checkers, even if they do not have any mutual dependencies - including this library.
 
-For detailed documentation, please see the [project site](https://wiselabcmu.github.io/abstract-dataloader/).
+For detailed documentation, please see the [project site](https://radarml.github.io/abstract-dataloader/).
 
 ## Why Abstract?
 
