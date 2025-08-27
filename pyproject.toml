@@ -32,9 +32,9 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/WiseLabCMU/abstract-dataloader"
-Documentation = "https://wiselabcmu.github.io/abstract-dataloader/"
-Issues = "https://github.com/WiseLabCMU/abstract-dataloader/issues"
+Homepage = "https://github.com/RadarML/abstract-dataloader"
+Documentation = "https://radarml.github.io/abstract-dataloader/"
+Issues = "https://github.com/RadarML/abstract-dataloader/issues"
 
 [project.optional-dependencies]
 docs = [

@@ -1,4 +1,4 @@
-name: CI
+name: Run CI
 
 on:
   push:
@@ -31,4 +31,4 @@ jobs:
 
     - name: Test on python ${{ matrix.python-version }} and generate coverage
       run: |
-        uv run --extra dev pytest -ra --cov --cov-report=html --cov-report=term -- tests
+        uv run --extra dev pytest -ra -- tests
