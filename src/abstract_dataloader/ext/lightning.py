@@ -180,6 +180,12 @@ class ADLDataModule(
             [`SampledDataset`][abstract_dataloader.ext.sample.]) is also
             applied.
 
+        !!! warning
+
+            This method is cached, returning the same `Dataset` for each split
+            when called. As a consequence, datasets will only be freed when
+            the entire `ADLDataModule` has no more references!
+
         Args:
             split: target split.
 
@@ -204,20 +210,57 @@ class ADLDataModule(
 
         return TransformedDataset(dataset, transform=self.transforms.sample)
 
+    def dataloader(
+        self, dataset: spec.Dataset[Raw] | Literal["train", "val", "test"],
+        mode: Literal["train", "val", "test"] | None = None
+    ) -> DataLoader:
+        """Create a `DataLoader` which applies transforms for a dataset.
+
+        | Mode  | `shuffle` | `drop_last` |
+        |-------|-----------|-------------|
+        | train | `True`    | `True`      |
+        | val   | `False`   | `True`      |
+        | test  | `False`   | `False`     |
+
+        Args:
+            dataset: The [ADL dataset][abstract_dataloader.spec.Dataset] to
+                create a [`DataLoader`][torch.utils.data.] for, or the name of
+                a split which is configured for this datamodule.
+            mode: Whether this is a train, validation, or test dataloader.
+                If a split name is passed as the `dataset` argument, this
+                argument is inferred.
+
+        Returns:
+            Pytorch dataloader with the configured transforms and settings
+                applied.
+        """
+        if mode == "train" or dataset == "train":
+            split_args = {"shuffle": True, "drop_last": True}
+        elif mode == "val" or dataset == "val":
+            split_args = {"shuffle": False, "drop_last": True}
+        elif mode == "test" or isinstance(dataset, str):
+            split_args = {"shuffle": False, "drop_last": False}
+        else:
+            raise ValueError(
+                "A custom `dataset` was provided to "
+                "`ADLDataModule.dataloader(...)`, but no `mode` was specified.")
+
+        if isinstance(dataset, str):
+            transformed = self.dataset(dataset)
+        else:
+            transformed = TransformedDataset(
+                dataset, transform=self.transforms.sample)
+
+        return DataLoader(transformed, **split_args, **self._dataloader_args)
+
     def train_dataloader(self) -> DataLoader:
-        """Get training dataloader (`shuffle=True, drop_last=True`)."""
-        return DataLoader(
-            self.dataset("train"), shuffle=True, drop_last=True,
-            **self._dataloader_args)
+        """Get train dataloader, i.e. `ADLDataModule.dataloader("train")`."""
+        return self.dataloader("train")
 
     def val_dataloader(self) -> DataLoader:
-        """Get validation dataloader (`shuffle=False, drop_last=True`)."""
-        return DataLoader(
-            self.dataset("val"), shuffle=False, drop_last=True,
-            **self._dataloader_args)
+        """Get val dataloader, i.e. `ADLDataModule.dataloader("val")`."""
+        return self.dataloader("val")
 
     def test_dataloader(self) -> DataLoader:
-        """Get test dataloader (`shuffle=False, drop_last=False`)."""
-        return DataLoader(
-            self.dataset("test"), shuffle=False, drop_last=False,
-            **self._dataloader_args)
+        """Get test dataloader, i.e. `ADLDataModule.dataloader("test")`."""
+        return self.dataloader("test")
