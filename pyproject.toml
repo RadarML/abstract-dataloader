@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "abstract_dataloader"
-version = "0.4.1"
+version = "0.4.2"
 authors = [
   { name="Tianshu Huang", email="tianshu2@andrew.cmu.edu" },
 ]
@@ -45,6 +45,8 @@ docs = [
     "mkdocstrings-python-xref == 1.16.3",
     "mkdocstrings-python == 1.16.6",
     "mkdocstrings == 0.29.*",
+    # wait until griffe/mkdocstrings-python correctly handle type parameters
+    "griffe == 1.8.0",
     "ruff >= 0.10.0"
 ]
 dev = [
