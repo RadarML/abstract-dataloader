@@ -18,8 +18,19 @@ TProcessed = TypeVar("TProcessed")
 class Collate(spec.Collate[TTransformed, TCollated]):
     """Generic numpy to pytorch collation.
 
-    Converts numpy arrays to pytorch tensors, and either stacks or concatenates
-    each value.
+    !!! info
+
+        This collator uses [`optree.tree_map`][?optree.tree_map] to
+        recursively traverse the input data structure. Python primitive
+        containers will work out-of-the-box, while dataclasses must be
+        [registered with optree](types.md#dataclass).
+
+    | Input           | Behavior                                             |
+    | --------------- | ---------------------------------------------------- |
+    | `torch.Tensor`  | Either stacked or concatenated, depending on `mode`. |
+    | `numpy.ndarray` | Converted to `Tensor`, then stacked/concatenated.    |
+    | `int | float | bool`, `convert_scalars=True` | Converted to `Tensor`.  |
+    | All other types | Passed through as a list.                            |
 
     Type Parameters:
         - `TTransformed`: input sample type.
@@ -27,20 +38,41 @@ class Collate(spec.Collate[TTransformed, TCollated]):
 
     Args:
         mode: whether to `stack` or `concat` during collation.
+        convert_scalars: whether to convert python scalars to pytorch tensors.
     """
 
-    def __init__(self, mode: Literal["stack", "concat"] = "concat") -> None:
+    def __init__(
+        self, mode: Literal["stack", "concat"] = "concat",
+        convert_scalars: bool = True
+    ) -> None:
         self.mode = mode
+        self.convert_scalars = convert_scalars
+
+    def _convert(self, *values) -> torch.Tensor | list[Any]:
+        if isinstance(values[0], np.ndarray):
+            values = [torch.from_numpy(v) for v in values]
+
+        if isinstance(values[0], torch.Tensor):
+            if self.mode == "concat":
+                return torch.concat(values)
+            else:  # "stack"
+                return torch.stack(values)
+        elif self.convert_scalars and isinstance(values[0], (float, int, bool)):
+            return torch.Tensor(values)
+        else:
+            return list(values)
 
     def __call__(self, data: Sequence[TTransformed]) -> TCollated:
-        if self.mode == "concat":
-            return optree.tree_map(
-                lambda *x: torch.concat([torch.from_numpy(s) for s in x]),
-                *data)  # type: ignore
-        else:
-            return optree.tree_map(
-                lambda *x: torch.stack([torch.from_numpy(s) for s in x]),
-                *data)  # type: ignore
+        """Apply collation.
+
+        Args:
+            data: sequence of samples to collate (i.e., list of objects).
+                Must have an identical structure.
+
+        Returns:
+            Collated batch (i.e., object of lists).
+        """
+        return optree.tree_map(self._convert, *data)  # type: ignore
 
 
 class TransformedDataset(

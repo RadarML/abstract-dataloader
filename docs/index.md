@@ -24,7 +24,7 @@ The **abstract dataloader** (ADL) is a minimalist [specification][abstract_datal
 
 ![Abstract Dataloader Overview](./diagrams/overview.svg)
 
-The ADL's specifications and bundled implementations lean heavily on generic type annotations in order to enable type checking using static type checkers such as [mypy](https://mypy-lang.org/) or [pyright](https://microsoft.github.io/pyright/) and runtime (dynamic) type checkers such as [beartype](https://github.com/beartype/beartype) and [typeguard](https://github.com/agronholm/typeguard), even when applying functor-like generic transforms such as [sequence loading][abstract_dataloader.generic.Window] and [transforms][abstract_dataloader.generic.SequencePipeline].
+The ADL's specifications and bundled implementations lean heavily on generic type annotations in order to enable type checking using static type checkers such as [mypy](https://mypy-lang.org/) or [pyright](https://microsoft.github.io/pyright/) and runtime (dynamic) type checkers such as [beartype](https://github.com/beartype/beartype) and [typeguard](https://github.com/agronholm/typeguard).
 
 !!! tip "Structural Subtyping"
 
