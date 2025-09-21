@@ -58,7 +58,7 @@ class Collate(spec.Collate[TTransformed, TCollated]):
             else:  # "stack"
                 return torch.stack(values)
         elif self.convert_scalars and isinstance(values[0], (float, int, bool)):
-            return torch.Tensor(values)
+            return torch.tensor(values)
         else:
             return list(values)
 
