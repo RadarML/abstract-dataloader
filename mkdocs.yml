@@ -87,6 +87,7 @@ plugins:
         - https://pytorch.org/docs/stable/objects.inv
         - https://docs.python.org/3/objects.inv
         - https://numpy.org/doc/stable/objects.inv
+        - https://optree.readthedocs.io/en/latest/objects.inv
 
 markdown_extensions:
   - pymdownx.highlight:

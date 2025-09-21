@@ -13,7 +13,7 @@ The **abstract dataloader** (ADL) is a minimalist [specification](https://radarm
 
 ![Abstract Dataloader Overview](https://radarml.github.io/abstract-dataloader/diagrams/overview.svg)
 
-The ADL's specifications and bundled implementations lean heavily on generic type annotations in order to enable type checking using static type checkers such as [mypy](https://mypy-lang.org/) or [pyright](https://microsoft.github.io/pyright/) and runtime (dynamic) type checkers such as [beartype](https://github.com/beartype/beartype) and [typeguard](https://github.com/agronholm/typeguard), even when applying functor-like generic transforms such as sequence loading and transforms.
+The ADL's specifications and bundled implementations lean heavily on generic type annotations in order to enable type checking using static type checkers such as [mypy](https://mypy-lang.org/) or [pyright](https://microsoft.github.io/pyright/) and runtime (dynamic) type checkers such as [beartype](https://github.com/beartype/beartype) and [typeguard](https://github.com/agronholm/typeguard).
 
 > [!TIP]
 > Since the abstract dataloader uses python's [structural subtyping](https://typing.python.org/en/latest/spec/protocol.html) - `Protocol` - feature, the `abstract_dataloader` is not a required dependency for using the abstract dataloader! Implementations which follow the specifications are fully interoperable, including with type checkers, even if they do not have any mutual dependencies - including this library.
