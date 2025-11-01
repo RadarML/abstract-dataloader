@@ -62,8 +62,10 @@ class Augmentations:
     def __call__(self, meta: dict[str, Any] = {}) -> dict[str, Any]:
         """Generate a dictionary of augmentations.
 
-        If a `train=False` flag is passed in `meta`, no augmentations are
-        generated.
+        !!! warning
+
+            Augmentations are only generated if a `{"train": True}` flag is
+            passed in `meta`.
 
         Args:
             meta: data processing configuration inputs.
