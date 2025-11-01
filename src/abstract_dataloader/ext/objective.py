@@ -101,7 +101,7 @@ class Objective(Protocol, Generic[TArray, YTrue, YPred]):
                 value is a stack of RGB images in HWC order, detached from
                 Torch and sent to a numpy array.
         """
-        ...
+        return {}
 
     def render(
         self, y_true: YTrue, y_pred: YPred, render_gt: bool = False
@@ -127,7 +127,7 @@ class Objective(Protocol, Generic[TArray, YTrue, YPred]):
             A dict, where each key is the name of a rendered output, and the
                 value is a numpy array of the rendered data (e.g., an image).
         """
-        ...
+        return {}
 
 
 YTrueAll = TypeVar("YTrueAll", infer_variance=True)
