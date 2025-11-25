@@ -247,16 +247,21 @@ class MultiObjective(Objective[TArray, YTrue, YPred]):
         - `YHat`: model output data type.
 
     Args:
+        strict: if `False`, objectives with missing keys are skipped instead of
+            raising an error.
         objectives: multiple objectives, organized by name; see
             [`MultiObjectiveSpec`][^.]. Each objective can also be provided as
             a dict, in which case the key/values are passed to
             `MultiObjectiveSpec`.
     """
 
-    def __init__(self, **objectives: Mapping | MultiObjectiveSpec) -> None:
+    def __init__(
+        self, strict: bool = True, **objectives: Mapping | MultiObjectiveSpec
+    ) -> None:
         if len(objectives) == 0:
             raise ValueError("At least one objective must be provided.")
 
+        self.strict = strict
         self.objectives = {
             k: v if isinstance(v, MultiObjectiveSpec)
             else MultiObjectiveSpec(**v)
@@ -268,12 +273,18 @@ class MultiObjective(Objective[TArray, YTrue, YPred]):
         loss = 0.
         metrics = {}
         for k, v in self.objectives.items():
-            k_loss, k_metrics = v.objective(
-                v.index_y_true(y_true), v.index_y_pred(y_pred), train=train)
-            loss += k_loss * v.weight
+            try:
+                k_loss, k_metrics = v.objective(
+                    v.index_y_true(y_true), v.index_y_pred(y_pred),
+                    train=train)
+                loss += k_loss * v.weight
 
-            for name, value in k_metrics.items():
-                metrics[f"{k}/{name}"] = value
+                for name, value in k_metrics.items():
+                    metrics[f"{k}/{name}"] = value
+
+            except (KeyError, AttributeError):
+                if self.strict:
+                    raise
 
         # We assure that there's at least one objective.
         loss = cast(Float[TArray, ""] | Float[TArray, "batch"], loss)
@@ -284,10 +295,16 @@ class MultiObjective(Objective[TArray, YTrue, YPred]):
     ) -> dict[str, UInt8[np.ndarray, "H W 3"]]:
         images = {}
         for k, v in self.objectives.items():
-            k_images = v.objective.visualizations(
-                v.index_y_true(y_true), v.index_y_pred(y_pred))
-            for name, image in k_images.items():
-                images[f"{k}/{name}"] = image
+            try:
+                k_images = v.objective.visualizations(
+                    v.index_y_true(y_true), v.index_y_pred(y_pred))
+                for name, image in k_images.items():
+                    images[f"{k}/{name}"] = image
+
+            except (KeyError, AttributeError):
+                if self.strict:
+                    raise
+
         return images
 
     def render(
@@ -295,11 +312,17 @@ class MultiObjective(Objective[TArray, YTrue, YPred]):
     ) -> dict[str, Shaped[np.ndarray, "batch ..."]]:
         rendered = {}
         for k, v in self.objectives.items():
-            k_rendered = v.objective.render(
-                v.index_y_true(y_true), v.index_y_pred(y_pred),
-                render_gt=render_gt)
-            for name, image in k_rendered.items():
-                rendered[f"{k}/{name}"] = image
+            try:
+                k_rendered = v.objective.render(
+                    v.index_y_true(y_true), v.index_y_pred(y_pred),
+                    render_gt=render_gt)
+                for name, image in k_rendered.items():
+                    rendered[f"{k}/{name}"] = image
+
+            except (KeyError, AttributeError):
+                if self.strict:
+                    raise
+
         return rendered
 
     def children(self) -> Iterable[Any]:
