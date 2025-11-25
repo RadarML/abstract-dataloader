@@ -131,7 +131,11 @@ class Sensor(ABC, spec.Sensor[TSample, TMetadata]):
         Fallback:
             Compute using the first and last metadata timestamp.
         """
-        return self.metadata.timestamps[-1] - self.metadata.timestamps[0]
+        try:
+            return self.metadata.timestamps[-1] - self.metadata.timestamps[0]
+        except IndexError:
+            # no first/last timestamps => no timestamps at all => 0 duration
+            return 0.0
 
     @property
     def framerate(self) -> float:
@@ -320,7 +324,11 @@ class Dataset(spec.Dataset[TSample]):
             Fetch the dataset length from the trace start indices (at the cost
             of triggering index computation).
         """
-        return self.indices[-1].item()
+        try:
+            return self.indices[-1].item()
+        except IndexError:
+            # Can't fetch indices[-1] => there are no traces
+            return 0
 
     def __repr__(self) -> str:  # noqa: D105
         return (
