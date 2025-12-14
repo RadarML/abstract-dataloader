@@ -115,5 +115,5 @@ exclude_also = [
     'if __name__ == .__main__.:',
     'class .*\bProtocol\):',
     'raise NotImplementedError',
-    'assert False',
+    'pytest.fail',
 ]

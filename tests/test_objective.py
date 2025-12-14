@@ -1,6 +1,7 @@
 """Tests for ext.objective."""
 
 import numpy as np
+import pytest
 from beartype.claw import beartype_package
 
 beartype_package("abstract_dataloader")
@@ -99,7 +100,7 @@ def test_multi_objective_spec_errors():
     data = {"existing_key": "value"}
     try:
         spec.index_y_true(data)
-        assert False, "Should have raised KeyError"
+        pytest.fail("Should have raised KeyError")
     except KeyError:
         pass
 
@@ -153,7 +154,7 @@ def test_multi_objective_error_handling():
 
     try:
         strict_multi({"existing": "data"}, {"pred": "data"}, train=True)
-        assert False, "Should have raised KeyError in strict mode"
+        pytest.fail("Should have raised KeyError in strict mode")
     except KeyError:
         pass
 
@@ -176,6 +177,6 @@ def test_multi_objective_empty():
     # Should raise ValueError when no objectives provided
     try:
         objective.MultiObjective()
-        assert False, "Should have raised ValueError for empty objectives"
+        pytest.fail("Should have raised ValueError for empty objectives")
     except ValueError:
         pass
