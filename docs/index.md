@@ -111,11 +111,7 @@ Please report any bugs, type-related issues/inconsistencies, and feel free to su
     uv run --extra docs mkdocs serve
     ```
 
-    Push to github pages with
-    ```sh
-    uv run --extra docs mkdocs build
-    ./update_gh_pages.sh
-    ```
+    Documentation is automatically deployed to github pages via actions on push to `main`.
 
     !!! info
 
