@@ -21,12 +21,13 @@ distributions:
 
 import os
 from collections.abc import Iterable
-from typing import Any, Generic, Protocol, TypeVar
+from typing import Any, Generic, Protocol, TypeVar, runtime_checkable
 
 import numpy as np
 
 T = TypeVar("T", covariant=True)
 
+@runtime_checkable
 class Augmentation(Protocol, Generic[T]):
     """A generic augmentation random generation policy."""
 

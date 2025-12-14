@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "abstract_dataloader"
-version = "0.4.5"
+version = "0.4.6"
 authors = [
   { name="Tianshu Huang", email="tianshu2@andrew.cmu.edu" },
 ]
@@ -115,4 +115,5 @@ exclude_also = [
     'if __name__ == .__main__.:',
     'class .*\bProtocol\):',
     'raise NotImplementedError',
+    'pytest.fail',
 ]

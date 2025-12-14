@@ -3,9 +3,9 @@
 [![pypi version](https://img.shields.io/pypi/v/abstract-dataloader.svg)](https://pypi.org/project/abstract-dataloader/)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/abstract-dataloader)
 ![PyPI - Types](https://img.shields.io/pypi/types/abstract-dataloader)
-![GitHub](https://img.shields.io/github/license/RadarML/abstract-dataloader)
+[![GitHub](https://img.shields.io/github/license/RadarML/abstract-dataloader)](https://github.com/RadarML/abstract-dataloader)
 [![CI](https://github.com/RadarML/abstract-dataloader/actions/workflows/ci.yml/badge.svg)](https://github.com/RadarML/abstract-dataloader/actions/workflows/ci.yml)
-![GitHub issues](https://img.shields.io/github/issues/RadarML/abstract-dataloader)
+[![GitHub issues](https://img.shields.io/github/issues/RadarML/abstract-dataloader)](https://github.com/RadarML/abstract-dataloader/issues)
 
 ## What is the Abstract Dataloader?
 
@@ -111,11 +111,7 @@ Please report any bugs, type-related issues/inconsistencies, and feel free to su
     uv run --extra docs mkdocs serve
     ```
 
-    Push to github pages with
-    ```sh
-    uv run --extra docs mkdocs build
-    ./update_gh_pages.sh
-    ```
+    Documentation is automatically deployed to github pages via actions on push to `main`.
 
     !!! info
 

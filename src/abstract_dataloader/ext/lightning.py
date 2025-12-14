@@ -24,8 +24,9 @@ The provided data module is based on the following assumptions:
     responsible for applying batch-to-batch (`.forward`) transforms.
 """
 
+from collections.abc import Callable, Mapping, Sequence
 from functools import cache, cached_property, partial
-from typing import Any, Callable, Generic, Literal, Mapping, Sequence, TypeVar
+from typing import Any, Generic, Literal, TypeVar
 
 import lightning as L  # noqa: N812
 import numpy as np

@@ -50,12 +50,12 @@ def test_abstract_types():
     transform = _ConcreteTransform()
     pipeline = _ConcretePipeline(sample=transform)
 
-    assert is_bearable(meta, spec.Metadata)
-    assert is_bearable(sensor, spec.Sensor)
-    assert is_bearable(trace, spec.Trace)
-    assert is_bearable(dataset, spec.Dataset)
-    assert is_bearable(transform, spec.Transform)
-    assert is_bearable(pipeline, spec.Pipeline)
+    assert is_bearable(meta, spec.Metadata)  # type: ignore
+    assert is_bearable(sensor, spec.Sensor)  # type: ignore
+    assert is_bearable(trace, spec.Trace)  # type: ignore
+    assert is_bearable(dataset, spec.Dataset)  # type: ignore
+    assert is_bearable(transform, spec.Transform)  # type: ignore
+    assert is_bearable(pipeline, spec.Pipeline)  # type: ignore
 
 
 @pytest.mark.parametrize("do_sync", [True, False, "manual"])
