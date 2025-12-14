@@ -12,9 +12,9 @@ from abstract_dataloader import generic, spec  # noqa: E402
 
 def test_sync_types():
     """Test synchronization protocols."""
-    assert is_bearable(generic.Empty(), spec.Synchronization)
-    assert is_bearable(generic.Next("dummy"), spec.Synchronization)
-    assert is_bearable(generic.Nearest("dummy"), spec.Synchronization)
+    assert is_bearable(generic.Empty(), spec.Synchronization)  # type: ignore
+    assert is_bearable(generic.Next("dummy"), spec.Synchronization)  # type: ignore
+    assert is_bearable(generic.Nearest("dummy"), spec.Synchronization)  # type: ignore
 
 
 def _make_timestamps():
@@ -122,6 +122,36 @@ def test_nearest_margin():
     ts2_ref = {k: v[1:-2] for k, v in ts.items()}
     indices2_ref = sync_ref(ts2_ref)
     assert all(np.array_equal(indices[k], indices2_ref[k] + 1) for k in ts)
+
+
+def test_decimate():
+    """generic.Decimate."""
+    ts = _make_timestamps()
+
+    # Test post-sync decimation (reference=None)
+    base = generic.Next("sensor1")
+    post_sync = generic.Decimate(base, factor=2)
+    base_indices = base(ts)
+    decimated_indices = post_sync(ts)
+
+    # Check that decimated indices are every other index from base
+    for sensor in ts.keys():
+        expected = base_indices[sensor][::2]
+        assert np.array_equal(decimated_indices[sensor], expected)
+
+    # Test pre-sync decimation (reference specified)
+    pre_sync = generic.Decimate(base, factor=2, reference="sensor1")
+    pre_decimated = pre_sync(ts)
+
+    # Should have fewer samples since we decimate the reference first
+    assert len(pre_decimated["sensor1"]) <= len(base_indices["sensor1"])
+
+    # Test with different factor
+    decimate_factor3 = generic.Decimate(base, factor=3)
+    decimated_factor3 = decimate_factor3(ts)
+    for sensor in ts.keys():
+        expected = base_indices[sensor][::3]
+        assert np.array_equal(decimated_factor3[sensor], expected)
 
 
 def test_arg_checking():

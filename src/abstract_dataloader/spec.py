@@ -133,6 +133,8 @@ class Synchronization(Protocol):
         - [`Next`][abstract_dataloader.generic.Next]: find the next
             measurement for each sensor relative to the reference sensor's
             measurements.
+        - [`Decimate`][abstract_dataloader.generic.Decimate]: a higher order
+            policy which decimates the frames selected by another protocol.
     """
 
     def __call__(

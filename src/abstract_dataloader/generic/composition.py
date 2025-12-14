@@ -3,6 +3,8 @@
 from collections.abc import Sequence
 from typing import Any, TypeVar, cast
 
+import numpy as np
+
 from abstract_dataloader import spec
 
 TRaw = TypeVar("TRaw", bound=dict[str, Any])
@@ -80,3 +82,49 @@ class ParallelPipelines(
         return cast(
             TProcessed,
             {k: v.batch(data[k]) for k, v in self.transforms.items()})
+
+
+TSample = TypeVar("TSample", bound=dict[str, Any])
+TSampleMeta = TypeVar("TSampleMeta", bound=dict[str, Any])
+
+
+class DatasetMeta(spec.Dataset[TSampleMeta]):
+    """Dataset wrapper that adds metadata to each sample.
+
+    !!! warning
+
+        This class assumes that the underlying data type is a dictionary, and
+        merges the metadata as a new `meta` key, i.e.:
+        ```python
+        {"meta": meta, **dataset[index]}
+        ```
+
+    Type Parameters:
+        - `TSample`, `TSampleWithMeta`: sample types before and after adding
+          metadata.
+
+    Args:
+        dataset: underlying dataset.
+        meta: static metadata to add to each sample.
+    """
+
+    def __init__(
+        self, dataset: spec.Dataset[TSample], meta: Any
+    ) -> None:
+        self.dataset = dataset
+        self.meta = meta
+
+    def __getitem__(self, index: int | np.integer) -> TSampleMeta:
+        """Fetch item from this dataset by global index.
+
+        Args:
+            index: sample index.
+
+        Returns:
+            Loaded sample.
+        """
+        return cast(TSampleMeta, {"meta": self.meta, **self.dataset[index]})
+
+    def __len__(self) -> int:
+        """Total number of samples in this dataset."""
+        return len(self.dataset)
