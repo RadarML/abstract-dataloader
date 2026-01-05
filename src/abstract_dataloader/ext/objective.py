@@ -7,12 +7,14 @@
     - Objectives can be combined into a higher-order objective,
       [`MultiObjective`][.], which combines their losses and aggregates their
       metrics; specify these objectives using a [`MultiObjectiveSpec`][.].
+    - [`MissingInputError`][.] is raised when a required input key or attribute
+      is missing.
 """
 
 from abc import abstractmethod
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
-from typing import Any, Generic, Protocol, cast, runtime_checkable
+from typing import Any, Generic, Literal, Protocol, cast, runtime_checkable
 
 import numpy as np
 import wadler_lindig as wl
@@ -23,6 +25,22 @@ from .types import TArray
 
 YTrue = TypeVar("YTrue", infer_variance=True)
 YPred = TypeVar("YPred", infer_variance=True)
+
+
+class MissingInputError(Exception):
+    """Exception raised when a required input key or attribute is missing."""
+
+    def __init__(
+        self, key: str, obj: Any, kind: Literal["Key", "Attribute"] = "Key"
+    ) -> None:
+        super().__init__(key)
+        self.key = key
+        self.obj = obj
+        self.kind = kind
+
+    def __str__(self) -> str:
+        """Exception messages are lazy-rendered."""
+        return f"{self.kind} {self.key} not found: {wl.pformat(self.obj)}"
 
 
 @dataclass(frozen=True)
@@ -43,8 +61,9 @@ class VisualizationConfig:
     cols: int = 8
     width: int = 512
     height: int = 256
-    cmaps: Mapping[
-        str, str | UInt8[np.ndarray, "N 3"]] = field(default_factory=dict)
+    cmaps: Mapping[str, str | UInt8[np.ndarray, "N 3"]] = field(
+        default_factory=dict
+    )
 
 
 @runtime_checkable
@@ -178,15 +197,15 @@ class MultiObjectiveSpec(Generic[YTrue, YPred, YTrueAll, YPredAll]):
         self, data: Any, key: str | Sequence[str] | Callable | None
     ) -> Any:
         """Index into data using the key or callable."""
+
         def dereference(obj, k):
             if isinstance(obj, Mapping):
                 if k not in obj:
-                    raise KeyError(f"Key {k} not found: {wl.pformat(obj)}")
+                    raise MissingInputError(k, obj, "Key")
                 return obj[k]
             else:
                 if not hasattr(obj, k):
-                    raise AttributeError(
-                        f"Attribute {k} not found: {wl.pformat(obj)}")
+                    raise MissingInputError(k, obj, "Attribute")
                 return getattr(obj, k)
 
         if isinstance(key, str):
@@ -197,7 +216,7 @@ class MultiObjectiveSpec(Generic[YTrue, YPred, YTrueAll, YPredAll]):
             return data
         elif callable(key):
             return key(data)
-        else:   # key is None
+        else:  # key is None
             return data
 
     def index_y_true(self, y_true: YTrueAll) -> YTrue:
@@ -263,26 +282,28 @@ class MultiObjective(Objective[TArray, YTrue, YPred]):
 
         self.strict = strict
         self.objectives = {
-            k: v if isinstance(v, MultiObjectiveSpec)
+            k: v
+            if isinstance(v, MultiObjectiveSpec)
             else MultiObjectiveSpec(**v)
-            for k, v in objectives.items()}
+            for k, v in objectives.items()
+        }
 
     def __call__(
         self, y_true: YTrue, y_pred: YPred, train: bool = True
     ) -> tuple[Float[TArray, "batch"], dict[str, Float[TArray, "batch"]]]:
-        loss = 0.
+        loss = 0.0
         metrics = {}
         for k, v in self.objectives.items():
             try:
                 k_loss, k_metrics = v.objective(
-                    v.index_y_true(y_true), v.index_y_pred(y_pred),
-                    train=train)
+                    v.index_y_true(y_true), v.index_y_pred(y_pred), train=train
+                )
                 loss += k_loss * v.weight
 
                 for name, value in k_metrics.items():
                     metrics[f"{k}/{name}"] = value
 
-            except (KeyError, AttributeError):
+            except MissingInputError:
                 if self.strict:
                     raise
 
@@ -297,11 +318,12 @@ class MultiObjective(Objective[TArray, YTrue, YPred]):
         for k, v in self.objectives.items():
             try:
                 k_images = v.objective.visualizations(
-                    v.index_y_true(y_true), v.index_y_pred(y_pred))
+                    v.index_y_true(y_true), v.index_y_pred(y_pred)
+                )
                 for name, image in k_images.items():
                     images[f"{k}/{name}"] = image
 
-            except (KeyError, AttributeError):
+            except MissingInputError:
                 if self.strict:
                     raise
 
@@ -314,12 +336,14 @@ class MultiObjective(Objective[TArray, YTrue, YPred]):
         for k, v in self.objectives.items():
             try:
                 k_rendered = v.objective.render(
-                    v.index_y_true(y_true), v.index_y_pred(y_pred),
-                    render_gt=render_gt)
+                    v.index_y_true(y_true),
+                    v.index_y_pred(y_pred),
+                    render_gt=render_gt,
+                )
                 for name, image in k_rendered.items():
                     rendered[f"{k}/{name}"] = image
 
-            except (KeyError, AttributeError):
+            except MissingInputError:
                 if self.strict:
                     raise
 

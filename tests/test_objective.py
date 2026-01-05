@@ -84,7 +84,7 @@ def test_multi_objective_spec_indexing():
     spec_callable = objective.MultiObjectiveSpec(
         objective=obj,
         y_true=lambda x: x["data"][:2],  # type: ignore
-        y_pred=lambda x: x["output"] * 2  # type: ignore
+        y_pred=lambda x: x["output"] * 2,  # type: ignore
     )
     data_for_callable = {"data": [1, 2, 3, 4], "output": 5}
     assert spec_callable.index_y_true(data_for_callable) == [1, 2]
@@ -96,13 +96,14 @@ def test_multi_objective_spec_errors():
     obj = MockObjective()
     spec = objective.MultiObjectiveSpec(objective=obj, y_true="missing_key")
 
-    # Should raise KeyError for missing keys
+    # Should raise MissingInputError for missing keys
     data = {"existing_key": "value"}
     try:
         spec.index_y_true(data)
-        pytest.fail("Should have raised KeyError")
-    except KeyError:
-        pass
+        pytest.fail("Should have raised MissingInputError")
+    except objective.MissingInputError as e:
+        # Verify the error message is rendered lazily (at this point)
+        assert str(e).startswith("Key missing_key not found")
 
 
 def test_multi_objective_basic():
@@ -112,7 +113,7 @@ def test_multi_objective_basic():
 
     multi_obj = objective.MultiObjective(
         task1={"objective": obj1, "weight": 1.0},
-        task2={"objective": obj2, "weight": 0.5}
+        task2={"objective": obj2, "weight": 0.5},
     )
 
     y_true = {"data": np.array([1, 2, 3])}
@@ -154,15 +155,15 @@ def test_multi_objective_error_handling():
 
     try:
         strict_multi({"existing": "data"}, {"pred": "data"}, train=True)
-        pytest.fail("Should have raised KeyError in strict mode")
-    except KeyError:
+        pytest.fail("Should have raised MissingInputError in strict mode")
+    except objective.MissingInputError:
         pass
 
     # Non-strict mode - should skip missing objectives
     non_strict_multi = objective.MultiObjective(
         strict=False,
         good_task={"objective": obj, "y_true": None},
-        bad_task={"objective": obj, "y_true": "missing_key"}
+        bad_task={"objective": obj, "y_true": "missing_key"},
     )
 
     # Should work without error, only processing good_task
