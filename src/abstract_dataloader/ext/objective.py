@@ -11,6 +11,7 @@
       is missing.
 """
 
+import logging
 from abc import abstractmethod
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
@@ -22,6 +23,8 @@ from jaxtyping import Float, Shaped, UInt8
 from typing_extensions import TypeVar
 
 from .types import TArray
+
+logger = logging.getLogger(__name__)
 
 YTrue = TypeVar("YTrue", infer_variance=True)
 YPred = TypeVar("YPred", infer_variance=True)
@@ -287,25 +290,47 @@ class MultiObjective(Objective[TArray, YTrue, YPred]):
             else MultiObjectiveSpec(**v)
             for k, v in objectives.items()
         }
+        # Track which objectives have already logged warnings to avoid spam
+        self._warned_objectives: set[str] = set()
 
     def __call__(
         self, y_true: YTrue, y_pred: YPred, train: bool = True
     ) -> tuple[Float[TArray, "batch"], dict[str, Float[TArray, "batch"]]]:
         loss = 0.0
         metrics = {}
+        num_successful = 0
+
         for k, v in self.objectives.items():
             try:
                 k_loss, k_metrics = v.objective(
                     v.index_y_true(y_true), v.index_y_pred(y_pred), train=train
                 )
                 loss += k_loss * v.weight
+                num_successful += 1
 
                 for name, value in k_metrics.items():
                     metrics[f"{k}/{name}"] = value
 
-            except MissingInputError:
+            except MissingInputError as e:
                 if self.strict:
                     raise
+
+                # Log warning for first occurrence only
+                if k not in self._warned_objectives:
+                    logger.warning(
+                        f"Objective '{k}' skipped due to missing input: "
+                        f"{e.kind} '{e.key}' not found. "
+                        f"This warning will only be shown once."
+                    )
+                    self._warned_objectives.add(k)
+
+        # If strict=False and no objectives succeeded, this is an error
+        if num_successful == 0:
+            raise RuntimeError(
+                "No valid objectives were computed. All objectives had missing "
+                "inputs. Please check your data pipeline and objective "
+                "specifications."
+            )
 
         # We assure that there's at least one objective.
         loss = cast(Float[TArray, ""] | Float[TArray, "batch"], loss)
@@ -323,9 +348,19 @@ class MultiObjective(Objective[TArray, YTrue, YPred]):
                 for name, image in k_images.items():
                     images[f"{k}/{name}"] = image
 
-            except MissingInputError:
+            except MissingInputError as e:
                 if self.strict:
                     raise
+
+                # Log warning for first occurrence only
+                warning_key = f"{k}_visualizations"
+                if warning_key not in self._warned_objectives:
+                    logger.warning(
+                        f"Visualizations for objective '{k}' skipped due to "
+                        f"missing input: {e.kind} '{e.key}' not found. This "
+                        f"warning will only be shown once."
+                    )
+                    self._warned_objectives.add(warning_key)
 
         return images
 
@@ -343,9 +378,19 @@ class MultiObjective(Objective[TArray, YTrue, YPred]):
                 for name, image in k_rendered.items():
                     rendered[f"{k}/{name}"] = image
 
-            except MissingInputError:
+            except MissingInputError as e:
                 if self.strict:
                     raise
+
+                # Log warning for first occurrence only
+                warning_key = f"{k}_render"
+                if warning_key not in self._warned_objectives:
+                    logger.warning(
+                        f"Rendering for objective '{k}' skipped due to missing "
+                        f"input: {e.kind} '{e.key}' not found. This warning "
+                        f"will only be shown once."
+                    )
+                    self._warned_objectives.add(warning_key)
 
         return rendered
 
