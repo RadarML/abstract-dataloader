@@ -90,6 +90,17 @@ class Objective(Protocol, Generic[TArray, YTrue, YPred]):
     ) -> tuple[Float[TArray, "batch"], dict[str, Float[TArray, "batch"]]]:
         """Training metrics implementation.
 
+        !!! tip
+
+            When implementing `Objective`, you can add additional arguments to
+            `__call__` as needed; if using `MultiObjective`, these arguments
+            can be specified via the `aux` field.
+
+            To be a valid `Objective` type, additional arguments should be
+            appended following the standard arguments (i.e., after `train`),
+            and provided with default values. If these arguments are required,
+            the implementation should raise an appropriate error or assertion.
+
         Args:
             y_true: data channels (i.e. dataloader output).
             y_pred: model outputs.
@@ -189,12 +200,18 @@ class MultiObjectiveSpec(Generic[YTrue, YPred, YTrueAll, YPredAll]):
         weight: Weight of the objective in the overall loss.
         y_true: Key or callable to index into the ground truth data.
         y_pred: Key or callable to index into the model output data.
+        aux: Auxiliary inputs indexed from ground truth data and passed to the
+            objective as keyword arguments. Each key becomes a keyword argument
+            name, and the value specifies how to index into ``y_true``.
     """
 
     objective: Objective
     weight: float = 1.0
     y_true: str | Sequence[str] | Callable[[YTrueAll], YTrue] | None = None
     y_pred: str | Sequence[str] | Callable[[YPredAll], YPred] | None = None
+    aux: Mapping[
+        str, str | Sequence[str] | Callable[[YTrueAll], YTrue] | None
+    ] = field(default_factory=dict)
 
     def _index(
         self, data: Any, key: str | Sequence[str] | Callable | None
@@ -243,6 +260,18 @@ class MultiObjectiveSpec(Generic[YTrue, YPred, YTrueAll, YPredAll]):
             Indexed model output data.
         """
         return self._index(y_pred, self.y_pred)
+
+    def index_aux(self, y_true: YTrueAll) -> dict[str, Any]:
+        """Get indexed auxiliary inputs from ground truth data.
+
+        Args:
+            y_true: All ground truth data (as loaded by the dataloader).
+
+        Returns:
+            Dict mapping each aux key to its indexed value, ready to be
+            passed as keyword arguments to the objective.
+        """
+        return {k: self._index(y_true, spec) for k, spec in self.aux.items()}
 
 
 class MultiObjective(Objective[TArray, YTrue, YPred]):
@@ -303,7 +332,10 @@ class MultiObjective(Objective[TArray, YTrue, YPred]):
         for k, v in self.objectives.items():
             try:
                 k_loss, k_metrics = v.objective(
-                    v.index_y_true(y_true), v.index_y_pred(y_pred), train=train
+                    v.index_y_true(y_true),
+                    v.index_y_pred(y_pred),
+                    train=train,
+                    **v.index_aux(y_true),
                 )
                 loss += k_loss * v.weight
                 num_successful += 1
@@ -343,7 +375,9 @@ class MultiObjective(Objective[TArray, YTrue, YPred]):
         for k, v in self.objectives.items():
             try:
                 k_images = v.objective.visualizations(
-                    v.index_y_true(y_true), v.index_y_pred(y_pred)
+                    v.index_y_true(y_true),
+                    v.index_y_pred(y_pred),
+                    **v.index_aux(y_true),
                 )
                 for name, image in k_images.items():
                     images[f"{k}/{name}"] = image
@@ -374,6 +408,7 @@ class MultiObjective(Objective[TArray, YTrue, YPred]):
                     v.index_y_true(y_true),
                     v.index_y_pred(y_pred),
                     render_gt=render_gt,
+                    **v.index_aux(y_true),
                 )
                 for name, image in k_rendered.items():
                     rendered[f"{k}/{name}"] = image
