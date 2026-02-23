@@ -6,6 +6,7 @@ from typing import Any, Generic, Literal, TypeVar
 import numpy as np
 import optree
 import torch
+from torch.nn.modules.module import _IncompatibleKeys
 
 from abstract_dataloader import abstract, spec
 
@@ -181,3 +182,11 @@ class Pipeline(
                 if isinstance(_children, Iterable):
                     modules.extend(Pipeline._find_modules(_children))
         return modules
+
+    def state_dict(self, *args, **kwargs):
+        return {}
+
+    def load_state_dict(
+        self, state_dict, strict: bool = True, assign: bool = True
+    ) -> _IncompatibleKeys:
+        return _IncompatibleKeys(missing_keys=[], unexpected_keys=[])
