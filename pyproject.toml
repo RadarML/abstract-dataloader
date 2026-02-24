@@ -47,7 +47,9 @@ docs = [
     "mkdocstrings == 0.29.*",
     # wait until griffe/mkdocstrings-python correctly handle type parameters
     "griffe == 1.8.0",
-    "ruff >= 0.10.0"
+    "ruff >= 0.10.0",
+    "click<=8.2.1",
+    "mkdocs-llmstxt>=0.5.0",
 ]
 dev = [
     "pre-commit >= 4.0.0",
@@ -60,8 +62,6 @@ dev = [
     "ruff >= 0.10.0",
     # lightning extra: dev only - users should bring their own
     "lightning >= 2.0.0",
-    "click<=8.2.1",
-    "mkdocs-llmstxt>=0.5.0",
 ]
 torch = [
     "optree >= 0.13",
