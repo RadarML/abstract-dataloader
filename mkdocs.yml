@@ -1,6 +1,7 @@
 site_name: Abstract Dataloader
 repo_url: https://github.com/RadarML/abstract-dataloader
 repo_name: abstract-dataloader
+site_url: https://radarml.github.io/abstract-dataloader
 nav:
   - About:
     - Home: index.md
@@ -63,6 +64,37 @@ theme:
 plugins:
 - search
 - autorefs
+- llmstxt:
+    full_output: llms-full.txt
+    markdown_description: |
+      Abstract Dataloader (ADL) is a framework for defining modular, type-safe
+      dataloaders for multimodal time-series data. It provides a protocol-based
+      specification (Dataset, Trace, Sensor, Transform, Collate, Pipeline),
+      abstract base classes, generic implementations, and optional extensions
+      for building interoperable data loading pipelines across frameworks and
+      modalities.
+    sections:
+      "About":
+      - index.md: Project overview and motivation
+      - dataloader.md: Dataset/Trace/Sensor programming model for loading multimodal time-series data
+      - transforms.md: Transform, Collate, and Pipeline protocols for data preprocessing
+      - tutorial.md: User's guide for using ADL-compliant components
+      - guide.md: Developer's guide for implementing ADL-compliant components using abstract base classes and type parameters
+      - verification.md: Static (pyright) and runtime (beartype/jaxtyping) type checking
+      - types.md: Setting up a type system with optree dataclasses and jaxtyping array annotations
+      "API":
+      - spec.md: Protocol definitions for Metadata, Sensor, Synchronization, Trace, Dataset, Transform, Collate, and Pipeline
+      - abstract.md: Abstract base class implementations of the spec protocols
+      - generic.md: Generic reusable implementations of the spec protocols
+      "Extensions":
+      - extensions/index.md: Overview of optional extension modules
+      - extensions/augment.md: Data augmentation utilities
+      - extensions/graph.md: Graph-structured data support
+      - extensions/lightning.md: PyTorch Lightning integration
+      - extensions/objective.md: Objective/loss function integration
+      - extensions/sample.md: Sampling strategies
+      - extensions/torch.md: PyTorch dataset and dataloader utilities
+      - extensions/types.md: Type system utilities
 - mkdocstrings:
     default_handler: python_xref
     handlers:
