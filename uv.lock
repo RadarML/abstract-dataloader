@@ -39,10 +39,8 @@ dependencies = [
 [package.optional-dependencies]
 dev = [
     { name = "beartype" },
-    { name = "click", version = "8.2.1", source = { registry = "https://pypi.org/simple" } },
     { name = "coverage" },
     { name = "lightning" },
-    { name = "mkdocs-llmstxt" },
     { name = "pre-commit" },
     { name = "pyright" },
     { name = "pytest" },
@@ -52,8 +50,10 @@ dev = [
     { name = "torch", version = "2.9.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform != 'darwin' and extra == 'extra-19-abstract-dataloader-dev') or (extra == 'extra-19-abstract-dataloader-dev' and extra == 'extra-19-abstract-dataloader-torch')" },
 ]
 docs = [
+    { name = "click" },
     { name = "griffe" },
     { name = "mkdocs" },
+    { name = "mkdocs-llmstxt" },
     { name = "mkdocs-material" },
     { name = "mkdocstrings" },
     { name = "mkdocstrings-python" },
@@ -68,13 +68,13 @@ torch = [
 [package.metadata]
 requires-dist = [
     { name = "beartype", marker = "extra == 'dev'", specifier = ">=0.20.0" },
-    { name = "click", marker = "extra == 'dev'", specifier = "<=8.2.1" },
+    { name = "click", marker = "extra == 'docs'", specifier = "<=8.2.1" },
     { name = "coverage", marker = "extra == 'dev'" },
     { name = "griffe", marker = "extra == 'docs'", specifier = "==1.8.0" },
     { name = "jaxtyping", specifier = ">=0.2.32" },
     { name = "lightning", marker = "extra == 'dev'", specifier = ">=2.0.0" },
     { name = "mkdocs", marker = "extra == 'docs'", specifier = "==1.6.*" },
-    { name = "mkdocs-llmstxt", marker = "extra == 'dev'", specifier = ">=0.5.0" },
+    { name = "mkdocs-llmstxt", marker = "extra == 'docs'", specifier = ">=0.5.0" },
     { name = "mkdocs-material", marker = "extra == 'docs'", specifier = "==9.6.*" },
     { name = "mkdocstrings", marker = "extra == 'docs'", specifier = "==0.29.*" },
     { name = "mkdocstrings-python", marker = "extra == 'docs'", specifier = "==1.16.6" },
@@ -411,43 +411,12 @@ wheels = [
 name = "click"
 version = "8.2.1"
 source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version >= '3.13' and sys_platform != 'darwin'",
-    "python_full_version >= '3.13' and sys_platform == 'darwin'",
-    "python_full_version == '3.12.*' and sys_platform != 'darwin'",
-    "python_full_version == '3.11.*' and sys_platform != 'darwin'",
-    "python_full_version == '3.12.*' and sys_platform == 'darwin'",
-    "python_full_version == '3.11.*' and sys_platform == 'darwin'",
-    "python_full_version < '3.11' and sys_platform != 'darwin'",
-    "python_full_version < '3.11' and sys_platform == 'darwin'",
-]
 dependencies = [
-    { name = "colorama", marker = "(sys_platform == 'win32' and extra == 'extra-19-abstract-dataloader-dev') or (extra == 'extra-19-abstract-dataloader-dev' and extra == 'extra-19-abstract-dataloader-torch')" },
+    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'extra-19-abstract-dataloader-dev' and extra == 'extra-19-abstract-dataloader-torch')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/60/6c/8ca2efa64cf75a977a0d7fac081354553ebe483345c734fb6b6515d96bbc/click-8.2.1.tar.gz", hash = "sha256:27c491cc05d968d271d5a1db13e3b5a184636d9d930f148c50b038f0d0646202", size = 286342, upload-time = "2025-05-20T23:19:49.832Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/85/32/10bb5764d90a8eee674e9dc6f4db6a0ab47c8c4d0d83c27f7c39ac415a4d/click-8.2.1-py3-none-any.whl", hash = "sha256:61a3265b914e850b85317d0b3109c7f8cd35a670f963866005d6ef1d5175a12b", size = 102215, upload-time = "2025-05-20T23:19:47.796Z" },
-]
-
-[[package]]
-name = "click"
-version = "8.3.1"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version >= '3.13' and extra != 'extra-19-abstract-dataloader-dev' and extra == 'extra-19-abstract-dataloader-torch'",
-    "python_full_version == '3.12.*' and extra != 'extra-19-abstract-dataloader-dev' and extra == 'extra-19-abstract-dataloader-torch'",
-    "python_full_version == '3.11.*' and extra != 'extra-19-abstract-dataloader-dev' and extra == 'extra-19-abstract-dataloader-torch'",
-    "python_full_version < '3.11' and extra != 'extra-19-abstract-dataloader-dev' and extra == 'extra-19-abstract-dataloader-torch'",
-    "python_full_version >= '3.13' and extra != 'extra-19-abstract-dataloader-dev' and extra != 'extra-19-abstract-dataloader-torch'",
-    "python_full_version >= '3.11' and python_full_version < '3.13' and extra != 'extra-19-abstract-dataloader-dev' and extra != 'extra-19-abstract-dataloader-torch'",
-    "python_full_version < '3.11' and extra != 'extra-19-abstract-dataloader-dev' and extra != 'extra-19-abstract-dataloader-torch'",
-]
-dependencies = [
-    { name = "colorama", marker = "(sys_platform == 'win32' and extra != 'extra-19-abstract-dataloader-dev') or (extra == 'extra-19-abstract-dataloader-dev' and extra == 'extra-19-abstract-dataloader-torch')" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/3d/fa/656b739db8587d7b5dfa22e22ed02566950fbfbcdc20311993483657a5c0/click-8.3.1.tar.gz", hash = "sha256:12ff4785d337a1bb490bb7e9c2b1ee5da3112e94a8622f26a6c77f5d2fc6842a", size = 295065, upload-time = "2025-11-15T20:45:42.706Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/98/78/01c019cdb5d6498122777c1a43056ebb3ebfeef2076d9d026bfe15583b2b/click-8.3.1-py3-none-any.whl", hash = "sha256:981153a64e25f12d547d3426c367a4857371575ee7ad18df2a6183ab0545b2a6", size = 108274, upload-time = "2025-11-15T20:45:41.139Z" },
 ]
 
 [[package]]
@@ -963,7 +932,7 @@ version = "0.7.22"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "markdown-it-py" },
-    { name = "tomli", marker = "python_full_version < '3.11'" },
+    { name = "tomli", marker = "python_full_version < '3.11' or (extra == 'extra-19-abstract-dataloader-dev' and extra == 'extra-19-abstract-dataloader-torch')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/fc/eb/b5cbf2484411af039a3d4aeb53a5160fae25dd8c84af6a4243bc2f3fedb3/mdformat-0.7.22.tar.gz", hash = "sha256:eef84fa8f233d3162734683c2a8a6222227a229b9206872e6139658d99acb1ea", size = 34610, upload-time = "2025-01-30T18:00:51.418Z" }
 wheels = [
@@ -1006,8 +975,7 @@ name = "mkdocs"
 version = "1.6.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "click", version = "8.2.1", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'extra-19-abstract-dataloader-dev'" },
-    { name = "click", version = "8.3.1", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'extra-19-abstract-dataloader-torch' or extra != 'extra-19-abstract-dataloader-dev'" },
+    { name = "click" },
     { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'extra-19-abstract-dataloader-dev' and extra == 'extra-19-abstract-dataloader-torch')" },
     { name = "ghp-import" },
     { name = "jinja2" },
