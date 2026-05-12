@@ -82,6 +82,10 @@ class ADLDataModule(
             CPU-side processing; use `num_workers=0` to run in the main thread.
         prefetch_factor: number of batches to fetch per worker. Must be `None`
             when `num_workers=0`.
+        multiprocessing_context: multiprocessing start method for worker
+            processes (e.g., `"spawn"` to avoid `fork`-with-CUDA issues).
+        persistent_workers: keep workers alive across epochs when
+            `num_workers>0` to reduce worker restart/teardown overhead.
         subsample: Sample only a (low-discrepancy) subset of samples on each
             split specified here instead of using all samples.
 
@@ -97,6 +101,8 @@ class ADLDataModule(
         transforms: spec.Pipeline[Raw, Transformed, Collated, Processed],
         batch_size: int = 32, samples: int | Sequence[int] = 0,
         num_workers: int = 32, prefetch_factor: int | None = None,
+        multiprocessing_context: str | None = None,
+        persistent_workers: bool = False,
         subsample: Mapping[str, int | float | None] = {}
     ) -> None:
         super().__init__()
@@ -106,11 +112,19 @@ class ADLDataModule(
         self._subsample = subsample
 
         self._dataset = dataset
-        self._dataloader_args = {
-            "batch_size": batch_size, "num_workers": num_workers,
-            "prefetch_factor": prefetch_factor, "pin_memory": True,
-            "collate_fn": transforms.collate
+        self._dataloader_args: dict[str, Any] = {
+            "batch_size": batch_size,
+            "num_workers": num_workers,
+            "pin_memory": True,
+            "collate_fn": transforms.collate,
         }
+        if num_workers > 0:
+            if prefetch_factor is not None:
+                self._dataloader_args["prefetch_factor"] = prefetch_factor
+            self._dataloader_args["persistent_workers"] = persistent_workers
+            if multiprocessing_context is not None:
+                self._dataloader_args["multiprocessing_context"] = (
+                    multiprocessing_context)
 
     @classmethod
     def from_traces(

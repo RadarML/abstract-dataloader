@@ -64,6 +64,21 @@ def test_window_uncropped(parallel) -> None:
         _ = windowed[4]
 
 
+@pytest.mark.parametrize("parallel", [None, 1, 2])
+def test_window_stride(parallel) -> None:
+    """Test non-overlapping windowing."""
+    meta = _ConcreteMetadata(10)
+
+    partialed = generic.Window.from_partial_sensor(
+        lambda path: _ConcreteSensor(meta),
+        past=3, future=0, stride=4, parallel=parallel)
+    windowed = partialed("ignored")
+
+    assert windowed[0] == [0, 1, 2, 3]
+    assert windowed[1] == [4, 5, 6, 7]
+    assert np.all(windowed.metadata.timestamps == np.array([3, 7]))
+
+
 def test_transform():
     """Test sequence transforms."""
     pipeline = abstract.Pipeline(

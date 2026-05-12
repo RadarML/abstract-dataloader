@@ -127,6 +127,7 @@ class TransformedDataset(
         return [self.dataset, self.transform]
 
 
+
 class Pipeline(
     torch.nn.Module,
     abstract.Pipeline[TRaw, TTransformed, TCollated, TProcessed]
@@ -166,10 +167,17 @@ class Pipeline(
             self.collate = collate
         if batch is not None:
             self.batch = batch
+            # self._batch = batch
 
         _modules = self._find_modules([sample, collate, batch])
         if len(_modules) > 0:
             self.submodules = torch.nn.ModuleList(_modules)
+            
+    # def forward(self, data):
+    #     return self._batch(data)
+    
+    # def batch(self, data):
+    #     return self(data)
 
     @staticmethod
     def _find_modules(objs: Iterable) -> list[torch.nn.Module]:

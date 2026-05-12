@@ -67,6 +67,8 @@ class Window(
             Set to `0` to disable.
         crop: if `True`, crop the first `past` and last `future` samples in
             the reported metadata to ensure that all samples are fully valid.
+        stride: step between exposed windows. Set to `1` for overlapping
+            windows, or to the window length for non-overlapping windows.
         parallel: maximum number of samples to load in parallel; if `None`, all
             samples are loaded sequentially.
     """
@@ -75,11 +77,12 @@ class Window(
         self, sensor: spec.Sensor[Sample, TMetadata],
         collate_fn: Callable[[list[Sample]], SampleStack] | None = None,
         past: int = 0, future: int = 0, crop: bool = True,
-        parallel: int | None = None
+        stride: int = 1, parallel: int | None = None
     ) -> None:
         self.sensor = sensor
         self.past = past
         self.future = future
+        self.stride = stride
         self.parallel = parallel
 
         if collate_fn is None:
@@ -92,16 +95,17 @@ class Window(
             # hack for negative indexing
             _future = None if future == 0 else -future
             self.metadata = Metadata(
-                timestamps=sensor.metadata.timestamps[past:_future])
+                timestamps=sensor.metadata.timestamps[past:_future:stride])
         else:
-            self.metadata = Metadata(timestamps=sensor.metadata.timestamps)
+            self.metadata = Metadata(
+                timestamps=sensor.metadata.timestamps[::stride])
 
     @classmethod
     def from_partial_sensor(
         cls, sensor: Callable[[str], spec.Sensor[Sample, TMetadata]],
         collate_fn: Callable[[list[Sample]], SampleStack] | None = None,
         past: int = 0, future: int = 0, crop: bool = True,
-        parallel: int | None = None
+        stride: int = 1, parallel: int | None = None
     ) -> Callable[[str], "Window[SampleStack, Sample, TMetadata]"]:
         """Partially initialize from partially initialized sensor.
 
@@ -129,6 +133,8 @@ class Window(
             crop: if `True`, crop the first `past` and last `future` samples in
                 the reported metadata to ensure that all samples are full
                 valid.
+            stride: step between exposed windows. Set to `1` for overlapping
+                windows, or to the window length for non-overlapping windows.
             parallel: maximum number of samples to load in parallel; if `None`,
                 all samples are loaded sequentially.
         """
@@ -137,7 +143,7 @@ class Window(
         ) -> Window[SampleStack, Sample, TMetadata]:
             return cls(
                 sensor(path), collate_fn=collate_fn, past=past,
-                future=future, crop=crop, parallel=parallel)
+                future=future, crop=crop, stride=stride, parallel=parallel)
 
         return create_wrapped_sensor
 
@@ -164,10 +170,12 @@ class Window(
             IndexError: if `crop=False`, and the requested index is out of
                 bounds (i.e., in the first `past` or last `future` samples).
         """
+        center = int(index) * self.stride
         if self.cropped:
-            window = list(range(index, index + self.past + self.future + 1))
+            start = center
         else:
-            window = list(range(index - self.past, index + self.future + 1))
+            start = center - self.past
+        window = list(range(start, start + self.past + self.future + 1))
 
         if window[0] < 0 or window[-1] >= len(self.sensor):
             raise IndexError(
@@ -182,7 +190,9 @@ class Window(
 
     def __repr__(self) -> str:
         """Get friendly name (passing through to the underlying sensor)."""
-        return f"{repr(self.sensor)} x [-{self.past}:+{self.future}]"
+        return (
+            f"{repr(self.sensor)} x [-{self.past}:+{self.future}:"
+            f"{self.stride}]")
 
 
 TRaw = TypeVar("TRaw")
