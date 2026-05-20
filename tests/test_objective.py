@@ -181,3 +181,48 @@ def test_multi_objective_empty():
         pytest.fail("Should have raised ValueError for empty objectives")
     except ValueError:
         pass
+
+
+def test_multi_objective_all_fail_non_strict():
+    """Test that RuntimeError is raised when all objectives fail."""
+    obj = MockObjective()
+
+    # Create multi-objective where all objectives have missing keys
+    multi_obj = objective.MultiObjective(
+        strict=False,
+        task1={"objective": obj, "y_true": "missing_key_1"},
+        task2={"objective": obj, "y_true": "missing_key_2"},
+    )
+
+    # Should raise RuntimeError since no objectives can be computed
+    with pytest.raises(RuntimeError, match="No valid objectives were computed"):
+        multi_obj({"data": "value"}, {"pred": "data"})
+
+
+def test_multi_objective_warning_once(caplog):
+    """Test that warnings are logged only once per objective."""
+    import logging
+
+    obj = MockObjective()
+
+    # Create multi-objective with one good and one bad objective
+    multi_obj = objective.MultiObjective(
+        strict=False,
+        good_task={"objective": obj, "y_true": None},
+        bad_task={"objective": obj, "y_true": "missing_key"},
+    )
+
+    # First call should log warning
+    with caplog.at_level(logging.WARNING):
+        loss1, metrics1 = multi_obj({"data": "value"}, {"pred": "data"})
+        assert "bad_task" in caplog.text
+        assert "missing_key" in caplog.text
+        assert "will only be shown once" in caplog.text
+
+    # Clear log
+    caplog.clear()
+
+    # Second call should NOT log warning again
+    with caplog.at_level(logging.WARNING):
+        loss2, metrics2 = multi_obj({"data": "value"}, {"pred": "data"})
+        assert "bad_task" not in caplog.text
