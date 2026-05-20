@@ -25,6 +25,25 @@ class MockObjective:
         return {"rendered": np.ones((1, 32, 32))}
 
 
+class MockObjectiveWithAux:
+    """Objective that records received aux kwargs for assertion."""
+
+    def __init__(self):
+        self.received_kwargs: dict = {}
+
+    def __call__(self, y_true, y_pred, train=True, **kwargs):
+        self.received_kwargs = kwargs
+        return np.array([1.0]), {"accuracy": np.array([0.9])}
+
+    def visualizations(self, y_true, y_pred, **kwargs):
+        self.received_kwargs = kwargs
+        return {"plot": np.ones((64, 64, 3), dtype=np.uint8)}
+
+    def render(self, y_true, y_pred, render_gt=False, **kwargs):
+        self.received_kwargs = kwargs
+        return {"rendered": np.ones((1, 32, 32))}
+
+
 def test_visualization_config():
     """Test VisualizationConfig dataclass."""
     # Default values
@@ -226,3 +245,69 @@ def test_multi_objective_warning_once(caplog):
     with caplog.at_level(logging.WARNING):
         loss2, metrics2 = multi_obj({"data": "value"}, {"pred": "data"})
         assert "bad_task" not in caplog.text
+
+
+def test_multi_objective_spec_aux_indexing():
+    """Test MultiObjectiveSpec.index_aux with all spec variants."""
+    obj = MockObjective()
+    data = {
+        "mask": np.array([True, False, True]),
+        "meta": {"scale": 0.5},
+    }
+
+    # str: index a single key
+    spec = objective.MultiObjectiveSpec(objective=obj, aux={"mask": "mask"})
+    aux = spec.index_aux(data)
+    np.testing.assert_array_equal(aux["mask"], data["mask"])
+
+    # Sequence[str]: traverse nested keys
+    spec_nested = objective.MultiObjectiveSpec(
+        objective=obj, aux={"scale": ["meta", "scale"]}
+    )
+    assert spec_nested.index_aux(data)["scale"] == 0.5
+
+    # Callable: apply function to ground truth
+    spec_callable = objective.MultiObjectiveSpec(
+        objective=obj, aux={"count": lambda x: len(x["mask"])}  # type: ignore
+    )
+    assert spec_callable.index_aux(data)["count"] == 3
+
+    # None: pass the full ground truth object
+    spec_none = objective.MultiObjectiveSpec(objective=obj, aux={"all": None})
+    assert spec_none.index_aux(data) == {"all": data}
+
+    # Default (empty aux)
+    spec_empty = objective.MultiObjectiveSpec(objective=obj)
+    assert spec_empty.index_aux(data) == {}
+
+
+def test_multi_objective_aux_passed_as_kwargs():
+    """Test that aux entries are indexed and forwarded as kwargs."""
+    mock = MockObjectiveWithAux()
+    mask = np.array([True, False, True])
+    y_true = {"mask": mask, "data": np.array([1.0, 2.0, 3.0])}
+    y_pred = {"output": np.array([1.1, 2.1, 2.9])}
+
+    multi = objective.MultiObjective(
+        task=objective.MultiObjectiveSpec(
+            objective=mock,
+            y_true="data",
+            y_pred="output",
+            aux={"mask": "mask"},
+        )
+    )
+
+    # __call__
+    multi(y_true, y_pred)
+    assert "mask" in mock.received_kwargs
+    np.testing.assert_array_equal(mock.received_kwargs["mask"], mask)
+
+    # visualizations
+    multi.visualizations(y_true, y_pred)
+    assert "mask" in mock.received_kwargs
+    np.testing.assert_array_equal(mock.received_kwargs["mask"], mask)
+
+    # render
+    multi.render(y_true, y_pred)
+    assert "mask" in mock.received_kwargs
+    np.testing.assert_array_equal(mock.received_kwargs["mask"], mask)
