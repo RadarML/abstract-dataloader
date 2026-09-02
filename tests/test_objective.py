@@ -247,6 +247,59 @@ def test_multi_objective_warning_once(caplog):
         assert "bad_task" not in caplog.text
 
 
+def test_multi_objective_zero_weight_missing_input_is_silent(caplog):
+    """Test that missing zero-weight objectives are optional."""
+    import logging
+
+    obj = MockObjective()
+    multi_obj = objective.MultiObjective(
+        strict=False,
+        good_task={"objective": obj, "y_true": None},
+        optional_task={
+            "objective": obj,
+            "weight": 0.0,
+            "y_pred": "latent_quant_meta",
+        },
+    )
+
+    with caplog.at_level(logging.WARNING):
+        loss, metrics = multi_obj({"data": "value"}, {"pred": "data"})
+        assert isinstance(loss, (int, float, np.ndarray))
+        assert "good_task/accuracy" in metrics
+        assert "optional_task/accuracy" not in metrics
+        assert "optional_task" not in caplog.text
+
+    caplog.clear()
+    with caplog.at_level(logging.WARNING):
+        vis = multi_obj.visualizations({"data": "value"}, {"pred": "data"})
+        assert "good_task/plot" in vis
+        assert "optional_task" not in caplog.text
+
+    caplog.clear()
+    with caplog.at_level(logging.WARNING):
+        rendered = multi_obj.render({"data": "value"}, {"pred": "data"})
+        assert "good_task/rendered" in rendered
+        assert "optional_task" not in caplog.text
+
+
+def test_multi_objective_zero_weight_present_input_still_runs():
+    """Test zero-weight objectives still produce metrics when valid."""
+    obj = MockObjective()
+    multi_obj = objective.MultiObjective(
+        good_task={"objective": obj, "weight": 1.0},
+        metric_task={"objective": obj, "weight": 0.0, "y_pred": "output"},
+    )
+
+    loss, metrics = multi_obj(
+        {"data": np.array([1, 2, 3])},
+        {"output": np.array([1.1, 2.1, 2.9])},
+    )
+
+    np.testing.assert_allclose(loss, np.array([1.0]))
+    assert "good_task/accuracy" in metrics
+    assert "metric_task/accuracy" in metrics
+
+
 def test_multi_objective_spec_aux_indexing():
     """Test MultiObjectiveSpec.index_aux with all spec variants."""
     obj = MockObjective()

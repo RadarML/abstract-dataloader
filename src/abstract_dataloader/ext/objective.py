@@ -322,6 +322,11 @@ class MultiObjective(Objective[TArray, YTrue, YPred]):
         # Track which objectives have already logged warnings to avoid spam
         self._warned_objectives: set[str] = set()
 
+    @staticmethod
+    def _warn_on_missing_input(v: MultiObjectiveSpec) -> bool:
+        """Return whether a skipped objective should log a warning."""
+        return v.weight != 0.0
+
     def __call__(
         self, y_true: YTrue, y_pred: YPred, train: bool = True
     ) -> tuple[Float[TArray, "batch"], dict[str, Float[TArray, "batch"]]]:
@@ -346,6 +351,9 @@ class MultiObjective(Objective[TArray, YTrue, YPred]):
             except MissingInputError as e:
                 if self.strict:
                     raise
+
+                if not self._warn_on_missing_input(v):
+                    continue
 
                 # Log warning for first occurrence only
                 if k not in self._warned_objectives:
@@ -386,6 +394,9 @@ class MultiObjective(Objective[TArray, YTrue, YPred]):
                 if self.strict:
                     raise
 
+                if not self._warn_on_missing_input(v):
+                    continue
+
                 # Log warning for first occurrence only
                 warning_key = f"{k}_visualizations"
                 if warning_key not in self._warned_objectives:
@@ -416,6 +427,9 @@ class MultiObjective(Objective[TArray, YTrue, YPred]):
             except MissingInputError as e:
                 if self.strict:
                     raise
+
+                if not self._warn_on_missing_input(v):
+                    continue
 
                 # Log warning for first occurrence only
                 warning_key = f"{k}_render"
